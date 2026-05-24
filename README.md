@@ -14,7 +14,7 @@ Useful for marketers, founders, designers, and anyone who wants to gauge audienc
 
 ## Why this exists
 
-Built as the second AI-applied-to-engineering demo in Pritika Priyadarshini's portfolio family (after `controlroom`). It surfaces in product form the same agent-orchestration work she ships at Paycom (GitLab MCP, agent skills, remediation agents) but in a market-facing, founder-clickable shape.
+An end-to-end demonstration of multi-agent orchestration on real infrastructure: prompt-injection defense (Azure AI Content Safety Prompt Shields), per-persona context isolation, live streaming over SSE, daily-budget circuit breakers, and a Postgres-backed transcript with FK-walkable threads. Authentication to Azure OpenAI is via the VM's Managed Identity, so no API keys leave Key Vault.
 
 ## Architecture
 
