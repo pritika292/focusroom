@@ -58,7 +58,7 @@ function Story() {
       <h1 className="font-display text-3xl md:text-4xl tracking-tight mb-6">
         Twenty strangers, one prompt, ninety seconds.
       </h1>
-      <div className="space-y-4 text-[15.5px] leading-relaxed">
+      <div className="space-y-4 text-[15.5px] leading-relaxed text-justify hyphens-auto">
         <p>
           FocusRoom is an audience simulator. A visitor types one message, a tagline, a product
           name, a hot take, a question, and twenty hardcoded AI personas react in real time.
@@ -160,84 +160,177 @@ function Contact() {
 
 function ArchitectureDiagram() {
   // Hand-positioned SVG. Static, no library, no auto-layout, no Mermaid.
+  // 540x320 viewBox matches pg-inspector + shortlive density so the
+  // diagram reads as substantial at column width rather than sparse.
   return (
     <svg
-      viewBox="0 0 360 280"
-      width="100%"
+      viewBox="0 0 540 320"
+      className="block w-full h-auto"
       role="img"
-      aria-label="focusroom architecture: browser -> Express -> orchestrator -> Postgres + Azure OpenAI + Prompt Shields, with SSE back to browser"
+      aria-label="focusroom flow: browser POSTs to Express; rate-limit + validate + Prompt Shields gate the input; orchestrator runs 60 turns; per turn it calls Azure OpenAI with Managed Identity, sanitizes, runs output safety, INSERTs a post, and publishes an SSE event back to the browser via the in-process hub."
+      xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-          <polygon points="0 0, 8 3, 0 6" fill="currentColor" />
+        <marker
+          id="fr-arrow"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="6"
+          markerHeight="6"
+          orient="auto-start-reverse"
+        >
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
         </marker>
       </defs>
-      <g stroke="currentColor" strokeWidth="1.2" fill="none" style={{ color: "var(--muted)" }}>
-        {/* Browser */}
-        <rect x="120" y="10" width="120" height="38" rx="4" />
-        {/* Express */}
-        <rect x="120" y="100" width="120" height="50" rx="4" />
-        {/* Orchestrator */}
-        <rect x="120" y="180" width="120" height="38" rx="4" />
-        {/* Postgres */}
-        <rect x="10" y="180" width="92" height="38" rx="4" />
-        {/* Azure */}
-        <rect x="258" y="180" width="92" height="60" rx="4" />
-        {/* Arrows */}
-        <line x1="180" y1="48" x2="180" y2="100" markerEnd="url(#arrowhead)" />
-        <line x1="180" y1="150" x2="180" y2="180" markerEnd="url(#arrowhead)" />
-        <line x1="170" y1="218" x2="105" y2="200" markerEnd="url(#arrowhead)" />
-        <line x1="240" y1="200" x2="258" y2="200" markerEnd="url(#arrowhead)" />
-        {/* SSE back */}
-        <path
-          d="M 158 100 C 70 90 70 50 130 48"
-          markerEnd="url(#arrowhead)"
-          strokeDasharray="3 3"
-        />
-      </g>
+
+      {/* Browser */}
+      <Box x={10} y={130} w={110} h={50} label="browser" sub="React + EventSource" />
+
+      {/* Express */}
+      <Box x={170} y={130} w={140} h={50} label="Express :3016" sub="route + middleware" accent />
+
+      {/* Three security layers, stacked along the right rail */}
+      <Box x={360} y={10} w={170} h={48} label="layer 1" sub="rate-limit + validate" />
+      <Box x={360} y={68} w={170} h={48} label="layer 2" sub="Prompt Shields (Azure)" />
+      <Box x={360} y={126} w={170} h={48} label="layer 3" sub="orchestrator + output safety" />
+
+      {/* Bottom row: Azure + Postgres */}
+      <Box x={360} y={200} w={170} h={48} label="Azure OpenAI" sub="gpt-4.1-mini" dashed />
+      <Box x={360} y={258} w={170} h={48} label="Postgres" sub="focusroom schema" dashed />
+
+      {/* Auth + SSE side annotations */}
+      <Box x={10} y={10} w={120} h={48} label="Managed Identity" sub="no API keys" dashed />
+      <Box x={10} y={258} w={120} h={48} label="SSE hub" sub="per-simId pub/sub" />
+
+      {/* Edges: browser <-> express */}
+      <Edge from={[120, 155]} to={[170, 155]} both />
+
+      {/* express -> 3 layers */}
+      <Edge from={[310, 145]} to={[360, 35]} />
+      <Edge from={[310, 152]} to={[360, 92]} />
+      <Edge from={[310, 159]} to={[360, 150]} />
+
+      {/* layer 3 -> postgres + azure (the work it does each turn) */}
+      <Edge from={[445, 174]} to={[445, 200]} dashed />
+      <Edge from={[445, 174]} to={[445, 258]} dashed />
+
+      {/* Managed Identity -> Express (used to mint Azure bearer) */}
+      <Edge from={[70, 58]} to={[200, 135]} dashed />
+
+      {/* Express -> SSE hub -> browser (asynchronous push) */}
+      <Edge from={[200, 180]} to={[70, 258]} dashed />
+      <Edge from={[70, 282]} to={[65, 180]} dashed />
+
+      {/* Labels */}
       <g
         fontFamily="ui-monospace, SF Mono, Menlo, monospace"
-        fontSize="10"
-        style={{ fill: "var(--text)" }}
-        textAnchor="middle"
-      >
-        <text x="180" y="32">
-          Browser (SPA)
-        </text>
-        <text x="180" y="121">
-          Express :3016
-        </text>
-        <text x="180" y="140" style={{ fill: "var(--muted)" }}>
-          POST /api/sim · GET /api/sim/:id/stream
-        </text>
-        <text x="180" y="202">
-          Orchestrator (60 turns)
-        </text>
-        <text x="56" y="202">
-          Postgres
-        </text>
-        <text x="56" y="215" style={{ fill: "var(--muted)" }}>
-          focusroom
-        </text>
-        <text x="304" y="202">
-          Azure OpenAI
-        </text>
-        <text x="304" y="215" style={{ fill: "var(--muted)" }}>
-          gpt-4.1-mini
-        </text>
-        <text x="304" y="230" style={{ fill: "var(--muted)" }}>
-          + Prompt Shields
-        </text>
-      </g>
-      <g
-        fontFamily="ui-monospace, SF Mono, Menlo, monospace"
-        fontSize="9"
+        fontSize="9.5"
         style={{ fill: "var(--accent)" }}
       >
-        <text x="92" y="78">
-          SSE
+        <text x="145" y="148">
+          POST /sim
+        </text>
+        <text x="142" y="167">
+          GET stream
         </text>
       </g>
+
+      {/* Caption */}
+      <text
+        x="270"
+        y="316"
+        textAnchor="middle"
+        fontFamily="ui-monospace, SF Mono, Menlo, monospace"
+        fontSize="9.5"
+        style={{ fill: "var(--muted)" }}
+      >
+        solid: request path · dashed: side-flows (auth, persistence, async push)
+      </text>
     </svg>
+  );
+}
+
+function Box({
+  x,
+  y,
+  w,
+  h,
+  label,
+  sub,
+  accent,
+  dashed,
+}: {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  label: string;
+  sub?: string;
+  accent?: boolean;
+  dashed?: boolean;
+}) {
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        rx={4}
+        fill="none"
+        stroke={accent ? "var(--accent)" : "var(--muted)"}
+        strokeWidth={accent ? 1.4 : 1.1}
+        strokeDasharray={dashed ? "4 3" : undefined}
+      />
+      <text
+        x={x + w / 2}
+        y={sub ? y + h / 2 - 2 : y + h / 2 + 4}
+        textAnchor="middle"
+        fontFamily="ui-monospace, SF Mono, Menlo, monospace"
+        fontSize="11"
+        style={{ fill: accent ? "var(--accent)" : "var(--text)" }}
+      >
+        {label}
+      </text>
+      {sub && (
+        <text
+          x={x + w / 2}
+          y={y + h / 2 + 12}
+          textAnchor="middle"
+          fontFamily="ui-monospace, SF Mono, Menlo, monospace"
+          fontSize="9"
+          style={{ fill: "var(--muted)" }}
+        >
+          {sub}
+        </text>
+      )}
+    </g>
+  );
+}
+
+function Edge({
+  from,
+  to,
+  dashed,
+  both,
+}: {
+  from: [number, number];
+  to: [number, number];
+  dashed?: boolean;
+  both?: boolean;
+}) {
+  return (
+    <line
+      x1={from[0]}
+      y1={from[1]}
+      x2={to[0]}
+      y2={to[1]}
+      stroke="var(--muted)"
+      strokeWidth={1.1}
+      strokeDasharray={dashed ? "4 3" : undefined}
+      markerEnd="url(#fr-arrow)"
+      markerStart={both ? "url(#fr-arrow)" : undefined}
+    />
   );
 }
