@@ -42,6 +42,13 @@ export default {
           600: "#E55400",
         },
       },
+      maxWidth: {
+        // Page-wide container width. Centered with mx-auto; sections sit
+        // inside this so the landing doesn't run edge-to-edge on 1440+.
+        page: "1280px",
+        // Reading-width container for body prose blocks.
+        content: "680px",
+      },
     },
   },
   plugins: [],

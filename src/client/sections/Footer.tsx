@@ -1,12 +1,11 @@
 export function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer className="max-w-page mx-auto px-6 py-12 mt-12 border-t border-border">
+    <footer className="max-w-page mx-auto px-6 lg:px-8 py-12 mt-12 border-t border-border">
       <div className="max-w-content space-y-3 text-[14px] text-muted leading-relaxed">
         <p>
-          Twenty hardcoded personas, sixty turns per simulation, roughly two thirds participate.
-          Each persona has a fixed demographic and voice; some run their mouth, some scroll past.
-          Like a real audience.
+          Twenty distinct voices, each with their own demographics, opinions, and writing style.
+          They argue, agree, scroll past, or pile on, the way a real comment section does.
         </p>
         <p>
           Built by{" "}

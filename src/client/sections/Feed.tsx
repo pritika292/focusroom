@@ -404,7 +404,7 @@ export function Feed({ simId, prompt, state }: Props) {
   }, []);
 
   return (
-    <section className="max-w-page mx-auto px-6 pt-2 pb-12">
+    <section className="max-w-page mx-auto px-6 lg:px-8 pt-2 pb-12">
       <div className="ig-shell">
         <OriginalPost prompt={prompt} />
         <LiveTicker state={state} />

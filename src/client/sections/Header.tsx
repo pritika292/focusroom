@@ -11,7 +11,7 @@ export function Header() {
   const next = theme === "dark" ? "light" : "dark";
   return (
     <header className="border-b border-border">
-      <div className="max-w-page mx-auto px-6 py-4 flex items-center justify-between gap-4">
+      <div className="max-w-page mx-auto px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
         <a
           href={PORTFOLIO}
           className="flex items-center gap-2.5 text-muted hover:text-accent transition-colors"

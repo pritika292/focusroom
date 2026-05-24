@@ -244,6 +244,82 @@ input {
   outline: 0;
 }
 
+/* Compact horizontal strip variant used in the desktop split layout —
+   one example per line, full column width, hover lifts + accents. */
+.fr-example-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 120ms ease;
+}
+.fr-example-strip__text {
+  min-width: 0;
+}
+.fr-example-strip__arrow {
+  color: var(--muted);
+  font-size: 14px;
+  flex-shrink: 0;
+  transition:
+    transform 150ms ease,
+    color 150ms ease;
+}
+.fr-example-strip:hover,
+.fr-example-strip:focus-visible {
+  border-color: var(--accent);
+  background: var(--card-bg-hover);
+  transform: translateY(-1px);
+  outline: 0;
+}
+.fr-example-strip:hover .fr-example-strip__arrow,
+.fr-example-strip:focus-visible .fr-example-strip__arrow {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+
+/* "What's next" / upcoming-features teaser panel below the prompt form. */
+.fr-upcoming {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  background: var(--card-bg);
+}
+.fr-upcoming__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+.fr-upcoming__list li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.fr-upcoming__list li::before {
+  content: "→";
+  color: var(--accent);
+  font-weight: 600;
+}
+.fr-upcoming__label {
+  font-weight: 600;
+  color: var(--text);
+}
+
 .fr-btn-ghost {
   display: inline-flex;
   align-items: center;
