@@ -7,7 +7,7 @@ const EMAIL = "pritikaapriyadarshini@gmail.com";
 const GITHUB = "https://github.com/pritika292/focusroom";
 const LINKEDIN = "https://www.linkedin.com/in/pritika-priyadarshini/";
 const PORTFOLIO = "https://pritika.studio/";
-const RESUME = "https://pritika.studio/resume.pdf";
+const RESUME = "https://pritika.studio/pritika_resume.pdf";
 
 const TECH = [
   {
