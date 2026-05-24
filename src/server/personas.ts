@@ -72,12 +72,45 @@ TONE (important):
 - aim for at least half of your replies to push back on or disagree with what
   was said. agreement is boring and not how social media actually reads.`.trim();
 
-function persona(p: Omit<Persona, "systemPrompt"> & { core: string; trait: string }): Persona {
+// Per-persona writing register. Half the roster writes "casual" (lowercase,
+// fragments, internet shorthand) and half writes "polished" (full
+// sentences, proper grammar). Real comment sections are a mix; before this
+// every persona wrote like a presidential debate, all polished, which
+// flattened the variance even though their voices differed.
+type WritingStyle = "casual" | "polished";
+
+const WRITING_STYLE_DIRECTIVE: Record<WritingStyle, string> = {
+  casual: `WRITING STYLE (casual):
+- mostly lowercase. capitalize for emphasis or when it's natural for you, not by default.
+- short, choppy, fragmented is fine. one short thought is better than three medium ones.
+- internet shorthand welcome where it fits your voice: tbh, ngl, fr, idk, lol, imo, smh, omg, wym.
+- drop articles ("the", "a") sometimes when the meaning is obvious.
+- skipping a final period or comma is fine.
+- think thumb-typed comment, not an essay. sometimes just a word or two is the right reply.`,
+  polished: `WRITING STYLE (polished):
+- Write in full sentences with proper grammar and punctuation. Capitalize starts of sentences and proper nouns.
+- Be brief if you want, but every sentence is a complete sentence.
+- No internet shorthand (no "tbh", no "ngl", no "fr"). Spell things out.
+- Punctuation matters. Commas, periods, occasional semicolons, all in place.
+- You can still be sharp, blunt, or sarcastic — but in clean prose, not fragments.`,
+};
+
+function persona(
+  p: Omit<Persona, "systemPrompt"> & {
+    core: string;
+    trait: string;
+    writingStyle: WritingStyle;
+  },
+): Persona {
   // The trait line lands at the very top so it sets the mood the LLM
-  // generates with.
+  // generates with. The writing-style block lands at the bottom of the
+  // persona-specific section so it acts as a hard formatting rule the
+  // model carries through generation.
   const fullPrompt = `Your dominant trait right now: ${p.trait}.
 
 ${p.core}
+
+${WRITING_STYLE_DIRECTIVE[p.writingStyle]}
 
 ${SHARED_RULES}`;
   return {
@@ -97,6 +130,7 @@ ${SHARED_RULES}`;
 const _PERSONAS: Persona[] = [
   persona({
     id: "alex-chen",
+    writingStyle: "casual",
     name: "Alex Chen",
     handle: "@alex_chen",
     avatar: { initials: "AC", bg: "#303F9F" },
@@ -111,6 +145,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "maya-iyer",
+    writingStyle: "casual",
     name: "Maya Iyer",
     handle: "@mayai",
     avatar: { initials: "MI", bg: "#7B1FA2" },
@@ -125,6 +160,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "roy-henderson",
+    writingStyle: "polished",
     name: "Roy Henderson",
     handle: "@royh",
     avatar: { initials: "RH", bg: "#5D4037" },
@@ -139,6 +175,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "brooke-walker",
+    writingStyle: "casual",
     name: "Brooke Walker",
     handle: "@brookew",
     avatar: { initials: "BW", bg: "#C2185B" },
@@ -153,6 +190,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "priya-menon",
+    writingStyle: "polished",
     name: "Priya Menon",
     handle: "@priyam",
     avatar: { initials: "PM", bg: "#C75B12" },
@@ -167,6 +205,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "diego-morales",
+    writingStyle: "casual",
     name: "Diego Morales",
     handle: "@diegom",
     avatar: { initials: "DM", bg: "#6A1B9A" },
@@ -181,6 +220,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "yuki-tanaka",
+    writingStyle: "polished",
     name: "Yuki Tanaka",
     handle: "@yukit",
     avatar: { initials: "YT", bg: "#455A64" },
@@ -195,6 +235,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "femi-adeyemi",
+    writingStyle: "polished",
     name: "Femi Adeyemi",
     handle: "@femia",
     avatar: { initials: "FA", bg: "#00796B" },
@@ -209,6 +250,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "eleanor-brooks",
+    writingStyle: "polished",
     name: "Eleanor Brooks",
     handle: "@eleanorb",
     avatar: { initials: "EB", bg: "#4E342E" },
@@ -223,6 +265,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "marcus-reed",
+    writingStyle: "casual",
     name: "Marcus Reed",
     handle: "@marcusr",
     avatar: { initials: "MR", bg: "#C0CA33" },
@@ -237,6 +280,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "aisling-oconnor",
+    writingStyle: "casual",
     name: "Aisling O'Connor",
     handle: "@aisling",
     avatar: { initials: "AO", bg: "#1976D2" },
@@ -251,6 +295,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "jamal-carter",
+    writingStyle: "polished",
     name: "Jamal Carter",
     handle: "@jamalc",
     avatar: { initials: "JC", bg: "#D32F2F" },
@@ -265,6 +310,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "sofia-rossi",
+    writingStyle: "casual",
     name: "Sofia Rossi",
     handle: "@sofiar",
     avatar: { initials: "SR", bg: "#0288D1" },
@@ -279,6 +325,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "liam-park",
+    writingStyle: "casual",
     name: "Liam Park",
     handle: "@liamp",
     avatar: { initials: "LP", bg: "#43A047" },
@@ -293,6 +340,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "hannah-wells",
+    writingStyle: "polished",
     name: "Hannah Wells",
     handle: "@hannahw",
     avatar: { initials: "HW", bg: "#F57C00" },
@@ -307,6 +355,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "arjun-kapoor",
+    writingStyle: "casual",
     name: "Arjun Kapoor",
     handle: "@arjunk",
     avatar: { initials: "AK", bg: "#00838F" },
@@ -321,6 +370,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "camille-laurent",
+    writingStyle: "polished",
     name: "Camille Laurent",
     handle: "@camillel",
     avatar: { initials: "CL", bg: "#4527A0" },
@@ -335,6 +385,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "gabriel-silva",
+    writingStyle: "casual",
     name: "Gabriel Silva",
     handle: "@gabrielss",
     avatar: { initials: "GS", bg: "#E64A19" },
@@ -349,6 +400,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "naomi-khan",
+    writingStyle: "polished",
     name: "Naomi Khan",
     handle: "@naomik",
     avatar: { initials: "NK", bg: "#E91E63" },
@@ -363,6 +415,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "sven-bergstrom",
+    writingStyle: "polished",
     name: "Sven Bergstrom",
     handle: "@svenb",
     avatar: { initials: "SB", bg: "#388E3C" },
