@@ -95,23 +95,40 @@ const WRITING_STYLE_DIRECTIVE: Record<WritingStyle, string> = {
 - You can still be sharp, blunt, or sarcastic — but in clean prose, not fragments.`,
 };
 
+// Lean-into-sarcasm directive. Applied to ~3 personas whose existing
+// voice already sits in the snark/deadpan/jaded zone so amplifying it
+// reads as natural, not bolted-on. Used to punch up a roomful of mostly
+// earnest reactions with a few faux-enthusiastic / mocking voices.
+const SARCASM_DIRECTIVE = `SARCASM (you lean heavily on this):
+- you say the opposite of what you mean often, in a deadpan / faux-supportive way.
+- favorites: "wow, what could possibly go wrong", "love this for us", "amazing,
+  truly", "sure, that'll work", "great, can't wait", "oh, fantastic", "right,
+  because that always works out". use them when the take deserves it.
+- mockery via fake-agreement: act like you're agreeing while obviously not.
+- it's mockery of the IDEA, not the person. punch up at bad takes, not at
+  individual commenters' identities.
+- not every single line — pick the moments. about half your replies should land
+  with a clear sarcastic edge; the other half can be straight.`;
+
 function persona(
   p: Omit<Persona, "systemPrompt"> & {
     core: string;
     trait: string;
     writingStyle: WritingStyle;
+    sarcastic?: boolean;
   },
 ): Persona {
   // The trait line lands at the very top so it sets the mood the LLM
   // generates with. The writing-style block lands at the bottom of the
   // persona-specific section so it acts as a hard formatting rule the
-  // model carries through generation.
+  // model carries through generation. Sarcasm is opt-in per persona so
+  // a few voices punch up the room without flooding it.
   const fullPrompt = `Your dominant trait right now: ${p.trait}.
 
 ${p.core}
 
 ${WRITING_STYLE_DIRECTIVE[p.writingStyle]}
-
+${p.sarcastic ? `\n${SARCASM_DIRECTIVE}\n` : ""}
 ${SHARED_RULES}`;
   return {
     id: p.id,
@@ -130,6 +147,7 @@ ${SHARED_RULES}`;
 const _PERSONAS: Persona[] = [
   persona({
     id: "alex-chen",
+    sarcastic: true,
     writingStyle: "casual",
     name: "Alex Chen",
     handle: "@alex_chen",
@@ -280,6 +298,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "aisling-oconnor",
+    sarcastic: true,
     writingStyle: "casual",
     name: "Aisling O'Connor",
     handle: "@aisling",
@@ -340,6 +359,7 @@ const _PERSONAS: Persona[] = [
   }),
   persona({
     id: "hannah-wells",
+    sarcastic: true,
     writingStyle: "polished",
     name: "Hannah Wells",
     handle: "@hannahw",
