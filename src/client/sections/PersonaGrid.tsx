@@ -4,7 +4,7 @@ export function PersonaGrid() {
   const personas = usePersonas();
 
   return (
-    <section className="max-w-page mx-auto px-6 py-12 md:py-16 border-t border-border">
+    <section className="max-w-page mx-auto px-6 lg:px-8 py-12 md:py-16 border-t border-border">
       <div className="flex items-baseline justify-between flex-wrap gap-3 mb-8">
         <h2 className="section-heading">Meet the room</h2>
         <p className="text-[13px] text-muted">
