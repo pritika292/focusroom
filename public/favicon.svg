@@ -1,5 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#0a0a0a"/>
-  <rect x="0" y="0" width="3" height="32" fill="#FF6A13"/>
-  <text x="8" y="23" font-family="ui-sans-serif,-apple-system,Inter,system-ui,sans-serif" font-size="20" font-weight="700" fill="#fafafa">p</text>
+  <rect width="32" height="32" rx="3" fill="#0a0a0a"/>
+  <rect x="0" y="0" width="4" height="32" fill="#FF6A13"/>
+  <path
+    d="M 22 9 Q 19 9 17 11 L 17 26 M 13 16 L 22 16"
+    stroke="#fafafa"
+    stroke-width="2.5"
+    stroke-linecap="square"
+    stroke-linejoin="miter"
+    fill="none"
+  />
 </svg>
