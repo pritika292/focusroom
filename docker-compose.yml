@@ -1,0 +1,29 @@
+# Production compose. Joins the shared `pritika` external network on the
+# VM so Caddy can reach the container by name, and the container can reach
+# `pritika-postgres` by name. No host port published; Caddy is the only
+# external surface.
+#
+# Env comes from /opt/pritika/_infra/focusroom.env, materialized on every
+# deploy by scripts/bootstrap-vm.sh.
+
+networks:
+  pritika:
+    external: true
+
+services:
+  app:
+    build: .
+    container_name: focusroom
+    restart: unless-stopped
+    networks: [pritika]
+    expose:
+      - "3016"
+    env_file:
+      - /opt/pritika/_infra/focusroom.env
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3016/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    mem_limit: 384m
