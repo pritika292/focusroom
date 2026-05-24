@@ -8,6 +8,19 @@ function readNumber(name: string, fallback: number): number {
   return n;
 }
 
+// Like readNumber but accepts 0. Used for the daily-budget cap, where 0
+// disables the cap entirely (relying on the per-IP rate limit and the
+// Azure subscription cap as the only spending controls).
+function readNonNegativeNumber(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 0) {
+    throw new Error(`Invalid env ${name}: ${raw}`);
+  }
+  return n;
+}
+
 function readString(name: string, fallback?: string): string {
   const raw = process.env[name];
   if (raw) return raw;
@@ -26,7 +39,11 @@ export const config = {
   AZURE_OPENAI_ENDPOINT: optString("AZURE_OPENAI_ENDPOINT"),
   AZURE_OPENAI_DEPLOYMENT: readString("AZURE_OPENAI_DEPLOYMENT", "gpt-4.1-mini"),
   FOCUSROOM_CONTENT_SAFETY_ENDPOINT: optString("FOCUSROOM_CONTENT_SAFETY_ENDPOINT"),
-  FOCUSROOM_DAILY_BUDGET_USD: readNumber("FOCUSROOM_DAILY_BUDGET_USD", 2),
+  // Daily budget cap in USD. Set to 0 to disable the cap entirely (relies
+  // on the per-IP rate limit + the Azure subscription cap as the only
+  // spending controls). Default 0 (disabled) — was 2 in v1 but the
+  // per-call cost rounding bug made $2 trip after ~4 sims.
+  FOCUSROOM_DAILY_BUDGET_USD: readNonNegativeNumber("FOCUSROOM_DAILY_BUDGET_USD", 0),
   FOCUSROOM_IP_DENYLIST: (optString("FOCUSROOM_IP_DENYLIST") ?? "")
     .split(",")
     .map((s) => s.trim())
