@@ -7,8 +7,10 @@ import { Upcoming } from "./sections/Upcoming.js";
 import { Feed } from "./sections/Feed.js";
 import { Footer } from "./sections/Footer.js";
 import { useSimStream } from "./lib/useSimStream.js";
+import { useVisitBeacon } from "./lib/visitBeacon.js";
 
 export function App() {
+  useVisitBeacon();
   const [simId, setSimId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
   const stream = useSimStream(simId);

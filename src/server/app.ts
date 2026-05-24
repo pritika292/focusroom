@@ -23,7 +23,9 @@ export function createApp(): Express {
         directives: {
           "default-src": ["'self'"],
           "img-src": ["'self'", "data:"],
-          "connect-src": ["'self'"],
+          // controlroom is allowed for the family-wide visit beacon
+          // (lib/visitBeacon.ts fires sendBeacon on landing-page mount).
+          "connect-src": ["'self'", "https://controlroom.pritika.studio"],
           "script-src": ["'self'"],
           "style-src": ["'self'", "'unsafe-inline'"],
           "font-src": ["'self'"],
