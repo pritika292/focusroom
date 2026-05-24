@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { simulationsRouter } from "./routes/simulations.js";
 import { streamRouter } from "./routes/stream.js";
 import { transcriptsRouter } from "./routes/transcripts.js";
+import { personasRouter } from "./routes/personas.js";
 
 const CLIENT_DIST = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../client");
 
@@ -38,6 +39,7 @@ export function createApp(): Express {
     res.json({ ok: true, service: "focusroom" });
   });
 
+  app.use(personasRouter);
   app.use(simulationsRouter);
   app.use(streamRouter);
   app.use(transcriptsRouter);
