@@ -10,6 +10,12 @@ const TURNS_PER_PERSONA = 3;
 const SLEEP_MIN_MS = 800;
 const SLEEP_MAX_MS = 1500;
 
+// TEMPORARY token-saver while iterating on the UI. Caps a simulation at
+// MAX_POSTS successful LLM-backed posts (skips do not count). Revert to
+// the full 60-turn budget once the UI is finalized -- tracked in
+// https://github.com/pritika292/focusroom/issues/60
+const MAX_POSTS = 5;
+
 /**
  * Drives a single simulation. Runs exactly TURNS_PER_PERSONA * PERSONAS.length
  * turns. Each turn picks a random persona from the pool with remaining
@@ -121,6 +127,11 @@ async function run(simId: string, visitorPrompt: string): Promise<void> {
     turnsRemaining.set(personaId, (turnsRemaining.get(personaId) ?? 1) - 1);
     if ((turnsRemaining.get(personaId) ?? 0) <= 0) {
       turnsRemaining.delete(personaId);
+    }
+    // TEMPORARY cap (see MAX_POSTS above + issue #60). Once we hit
+    // MAX_POSTS successful posts, stop. Skips do not count.
+    if (postCount >= MAX_POSTS) {
+      break;
     }
     await sleep(SLEEP_MIN_MS + Math.random() * (SLEEP_MAX_MS - SLEEP_MIN_MS));
   }

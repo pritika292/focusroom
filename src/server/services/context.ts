@@ -33,7 +33,11 @@ export function buildContext(args: ContextArgs): string {
   const wrappedPrompt = wrapVisitorMessage(args.visitorPrompt);
 
   if (args.decision === "original") {
-    return `${wrappedPrompt}\n\nReply with your first reaction in 1 to 3 sentences.`;
+    return `${wrappedPrompt}
+
+You are scrolling a feed and this just showed up. Drop your first reaction
+in 1 to 3 sentences. React to the IDEA, not to imagined other commenters.
+Stay in character.`;
   }
 
   if (!args.parentPostId) {
@@ -46,22 +50,28 @@ export function buildContext(args: ContextArgs): string {
     .map((p, idx) => {
       const indent = "  ".repeat(idx);
       const name = args.personaName(p.personaId);
-      const location = args.personaLocation(p.personaId);
-      const marker =
-        p.id === args.parentPostId ? "      <- THIS IS THE POST YOU ARE REPLYING TO" : "";
-      return `${indent}${name} (${location}):${marker}\n${indent}  ${p.body}`;
+      const marker = p.id === args.parentPostId ? "   <-- you are replying to THIS one" : "";
+      return `${indent}- ${name}: ${p.body}${marker}`;
     })
     .join("\n\n");
 
   return `${wrappedPrompt}
 
-A conversation has started underneath the message above. You are going to
-reply to one of the comments. Here is the thread in order, oldest first:
+A few people commented underneath that post. You're scrolling through and
+you've decided to reply to one of them. Here is the conversation so far
+(oldest first):
 
 ${renderedThread}
 
-Reply directly to the marked post in 1 to 3 sentences. Acknowledge what
-they said. Stay in character.`;
+Write your reply in 1 to 3 sentences. Important:
+
+- React the way real people do in social media comment threads. Don't
+  open with their name or "@handle" unless it would actually feel natural.
+- Don't start with "agreed" or "great point". Just react to the substance.
+- You can quote a short phrase of theirs if it helps, but you don't have
+  to acknowledge them at all to be in conversation. Sometimes you can
+  just add your own take that builds on or pushes against what they said.
+- Stay in character.`;
 }
 
 function wrapVisitorMessage(prompt: string): string {

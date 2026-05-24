@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSubmitSim } from "../lib/useSubmitSim.js";
 
 const EXAMPLES = [
@@ -11,7 +11,7 @@ const EXAMPLES = [
 ];
 
 interface Props {
-  onSubmit: (simId: string) => void;
+  onSubmit: (simId: string, prompt: string) => void;
 }
 
 export function PromptForm({ onSubmit }: Props) {
@@ -25,16 +25,19 @@ export function PromptForm({ onSubmit }: Props) {
     return () => clearInterval(interval);
   }, [value]);
 
+  const valueRef = useRef(value);
+  valueRef.current = value;
   useEffect(() => {
-    if (simId) onSubmit(simId);
+    if (simId) onSubmit(simId, valueRef.current.trim());
   }, [simId, onSubmit]);
 
-  const submitDisabled = submitting || value.trim().length < 5 || value.trim().length > 500;
+  const trimmedLen = value.trim().length;
+  const submitDisabled = submitting || trimmedLen < 5 || trimmedLen > 500;
 
   return (
-    <section className="max-w-page mx-auto px-6 py-8">
+    <section className="max-w-page mx-auto px-6 pt-2 pb-12">
       <form
-        className="max-w-content"
+        className="fr-prompt-form max-w-content"
         onSubmit={(e) => {
           e.preventDefault();
           if (submitDisabled) return;
@@ -44,46 +47,53 @@ export function PromptForm({ onSubmit }: Props) {
         <label htmlFor="prompt" className="sr-only">
           Your post
         </label>
-        <textarea
-          id="prompt"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder={EXAMPLES[placeholderIdx] ?? ""}
-          maxLength={500}
-          rows={3}
-          className="w-full bg-card border border-border px-4 py-3 text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-y font-sans text-[16px] leading-relaxed"
-        />
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[12px] text-muted font-mono">
-          <span>{value.length} / 500</span>
-          {rateLimitRemaining !== null && (
-            <span>{rateLimitRemaining}/10 simulations remaining this hour</span>
-          )}
+        <div className="fr-prompt-shell">
+          <textarea
+            id="prompt"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={EXAMPLES[placeholderIdx] ?? ""}
+            maxLength={500}
+            rows={3}
+            className="fr-prompt-input"
+          />
+          <div className="fr-prompt-bar">
+            <span className="fr-prompt-count font-mono">
+              <span className={trimmedLen >= 5 && trimmedLen <= 500 ? "text-text" : "text-muted"}>
+                {trimmedLen}
+              </span>
+              <span className="text-muted"> / 500</span>
+            </span>
+            {rateLimitRemaining !== null && (
+              <span className="fr-prompt-rate font-mono">
+                {rateLimitRemaining}/10 sims left this hour
+              </span>
+            )}
+            <button type="submit" disabled={submitDisabled} className="fr-btn-primary">
+              {submitting ? (
+                <span className="fr-btn-spinner" aria-hidden />
+              ) : (
+                <>
+                  <span>Run simulation</span>
+                  <span aria-hidden>→</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
-        <button
-          type="submit"
-          disabled={submitDisabled}
-          className="mt-4 px-5 py-2 bg-accent text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
-        >
-          {submitting ? "Starting..." : "Run simulation"}
-        </button>
         {error && (
           <p className="mt-3 text-[14px] text-accent" role="alert">
             {error}
           </p>
         )}
       </form>
-      <div className="mt-6 max-w-content">
-        <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-muted mb-2">
-          Try one of these
+      <div className="mt-8 max-w-content">
+        <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-muted mb-3">
+          Or try one of these
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid sm:grid-cols-2 gap-2">
           {EXAMPLES.slice(0, 4).map((ex) => (
-            <button
-              key={ex}
-              type="button"
-              onClick={() => setValue(ex)}
-              className="text-left px-3 py-1.5 border border-border hover:border-accent text-[13px] transition-colors"
-            >
+            <button key={ex} type="button" onClick={() => setValue(ex)} className="fr-example-card">
               {ex}
             </button>
           ))}
