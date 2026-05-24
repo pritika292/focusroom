@@ -42,19 +42,27 @@ if [ -z "${FOCUSROOM_DB_PASSWORD:-}" ]; then
   log "Generated new FOCUSROOM_DB_PASSWORD"
 fi
 
-# Create or update the focusroom_app role. Pass the password as a psql
-# variable to avoid quoting/escape issues. Idempotent.
-log "Ensuring focusroom_app role + schema grants"
-docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" pritika-postgres \
-  psql -U postgres -d "$DB_NAME" -v "pw=$FOCUSROOM_DB_PASSWORD" -v ON_ERROR_STOP=1 <<'SQL'
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'focusroom_app') THEN
-    CREATE ROLE focusroom_app LOGIN;
-  END IF;
-END
-$$;
-ALTER ROLE focusroom_app WITH PASSWORD :'pw';
+# Helper -- run a single psql -c against pritika-postgres as the superuser.
+pg_super() {
+  docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" pritika-postgres \
+    psql -U postgres -d "$DB_NAME" -v ON_ERROR_STOP=1 "$@"
+}
+
+# Create or update the focusroom_app role. The hex password from
+# openssl rand is shell-safe (no quotes, no special chars), so we can
+# embed it directly into the SQL string.
+log "Ensuring focusroom_app role"
+ROLE_EXISTS="$(pg_super -tAc "SELECT 1 FROM pg_roles WHERE rolname='focusroom_app'")"
+if [ -z "$ROLE_EXISTS" ]; then
+  pg_super -c "CREATE ROLE focusroom_app LOGIN PASSWORD '$FOCUSROOM_DB_PASSWORD'"
+  log "Created focusroom_app role"
+else
+  pg_super -c "ALTER ROLE focusroom_app WITH PASSWORD '$FOCUSROOM_DB_PASSWORD'"
+  log "Updated focusroom_app password"
+fi
+
+log "Ensuring focusroom schema + grants"
+pg_super <<'SQL'
 CREATE SCHEMA IF NOT EXISTS focusroom AUTHORIZATION focusroom_app;
 GRANT USAGE, CREATE ON SCHEMA focusroom TO focusroom_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA focusroom TO focusroom_app;
