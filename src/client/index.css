@@ -1061,12 +1061,11 @@ input {
 }
 .fr-persona-detail__dl {
   display: grid;
-  /* Each dl row is auto-sized but the dl as a whole stretches to fill
-     the remaining card height (after the hero). gap stretches with
-     align-content so rows space themselves evenly down the column. */
-  flex: 1 1 auto;
-  align-content: space-evenly;
-  gap: 18px;
+  /* Rows pack at the top with natural spacing. The card itself still
+     stretches to match the left grid height (see .fr-persona-detail's
+     align-self: stretch); any leftover space sits at the bottom of the
+     card, reserved for future content. */
+  gap: 14px;
   margin: 0;
 }
 .fr-persona-detail__dl > div {
