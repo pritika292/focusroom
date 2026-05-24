@@ -40,12 +40,20 @@ async function run(simId: string, visitorPrompt: string): Promise<void> {
   let postCount = 0;
   let silentTurns = 0;
 
+  // Tracks who just posted so we never pick the same persona twice in a
+  // row (avoids "Yuki replies to Yuki" instant self-threads).
+  let lastPostingPersonaId: string | null = null;
+  // Tracks personas who have already started one top-level thread. Once
+  // in this set, that persona can still reply or skip, but if the dice
+  // rolls 'original' for them again we flip it to 'reply'.
+  const agentsWithOriginal = new Set<string>();
+
   console.log(
     `[orchestrator] sim ${simId} starting, ${turnsRemaining.size} personas x ${TURNS_PER_PERSONA} turns`,
   );
 
   while (anyTurnsLeft(turnsRemaining)) {
-    const personaId = pickPersona(turnsRemaining);
+    const personaId = pickPersona(turnsRemaining, lastPostingPersonaId);
     const persona = getPersona(personaId);
     if (!persona) {
       // shouldn't happen; defensive
@@ -53,7 +61,13 @@ async function run(simId: string, visitorPrompt: string): Promise<void> {
       continue;
     }
 
-    const decision = pickDecision(liveSnapshot);
+    let decision = pickDecision(liveSnapshot);
+    // Per-persona "max one original" rule. If this persona already started
+    // a top-level thread, convert any rolled 'original' into a 'reply'
+    // (if there's something to reply to) or a 'skip' (if not).
+    if (decision === "original" && agentsWithOriginal.has(personaId)) {
+      decision = liveSnapshot.length > 0 ? "reply" : "skip";
+    }
 
     try {
       if (decision === "skip") {
@@ -107,6 +121,10 @@ async function run(simId: string, visitorPrompt: string): Promise<void> {
             };
             liveSnapshot.push(node);
             postCount += 1;
+            lastPostingPersonaId = persona.id;
+            if (decision === "original") {
+              agentsWithOriginal.add(persona.id);
+            }
             publish(simId, "post", {
               id: r.id,
               simId,
@@ -157,13 +175,17 @@ function anyTurnsLeft(turnsRemaining: Map<string, number>): boolean {
   return false;
 }
 
-function pickPersona(turnsRemaining: Map<string, number>): string {
-  const ids: string[] = [];
+function pickPersona(turnsRemaining: Map<string, number>, excludeId: string | null): string {
+  const allIds: string[] = [];
   for (const [id, n] of turnsRemaining) {
-    if (n > 0) ids.push(id);
+    if (n > 0) allIds.push(id);
   }
-  const idx = Math.floor(Math.random() * ids.length);
-  return ids[idx] ?? ids[0] ?? "";
+  // Prefer not picking the same persona who just posted -- avoids the
+  // "Yuki replies to Yuki" feel. Only fall back to them if they're the
+  // last persona with turns remaining.
+  const pool = excludeId && allIds.length > 1 ? allIds.filter((id) => id !== excludeId) : allIds;
+  const idx = Math.floor(Math.random() * pool.length);
+  return pool[idx] ?? pool[0] ?? "";
 }
 
 function pickDecision(posts: PostNode[]): Decision {
