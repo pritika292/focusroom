@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FocusRoom, audience simulator by Pritika Priyadarshini</title>
+    <meta
+      name="description"
+      content="Drop a post. Watch 20 hardcoded personas react in real time. An audience simulator for marketers, founders, and product folks. Built by Pritika Priyadarshini."
+    />
+    <link rel="canonical" href="https://focusroom.pritika.studio" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://focusroom.pritika.studio" />
+    <meta property="og:title" content="FocusRoom, audience simulator" />
+    <meta
+      property="og:description"
+      content="Drop a post. Watch 20 hardcoded personas react in real time."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0a" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafaf7" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/Geist-Variable.woff2"
+      crossorigin
+    />
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("focusroom:theme");
+          var theme;
+          if (stored === "light" || stored === "dark") {
+            theme = stored;
+          } else {
+            theme = window.matchMedia("(prefers-color-scheme: light)").matches
+              ? "light"
+              : "dark";
+          }
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

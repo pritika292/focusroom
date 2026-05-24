@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Geist Variable for display sizes; system sans for body. Tokens land
+   together with the Hero in Epic 7 (#33). This minimal block keeps the
+   scaffold readable. */
+
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/Geist-Variable.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark light;
+}
+
+[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --accent: #ff6a13;
+  --accent-glow: rgba(255, 106, 19, 0.1);
+  --border: #1f1f1f;
+  --card-bg: #0f0f0f;
+}
+
+[data-theme="light"] {
+  --bg: #fafaf7;
+  --text: #0a0a0a;
+  --muted: #71717a;
+  --accent: #ff6a13;
+  --accent-glow: rgba(255, 106, 19, 0.06);
+  --border: #e5e5e0;
+  --card-bg: #ffffff;
+}
+
+html {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    ui-sans-serif,
+    -apple-system,
+    "SF Pro Text",
+    "Inter",
+    system-ui,
+    sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
