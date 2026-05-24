@@ -58,7 +58,13 @@ async function doChat(
           { role: "user", content: userMessage },
         ],
         max_tokens: 250,
-        temperature: 0.85,
+        // Higher temperature for more variance between persona voices;
+        // presence_penalty discourages reusing tokens from the prompt,
+        // frequency_penalty discourages repeated tokens in the output.
+        // Together they push the model off the "echo the context" path.
+        temperature: 1.0,
+        presence_penalty: 0.6,
+        frequency_penalty: 0.4,
       },
       { signal: ac.signal },
     );

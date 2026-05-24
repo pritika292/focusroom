@@ -37,6 +37,7 @@ export function buildContext(args: ContextArgs): string {
 
 You are scrolling a feed and this just showed up. Drop your first reaction
 in 1 to 3 sentences. React to the IDEA, not to imagined other commenters.
+Find your own framing in YOUR words. Don't echo the post's vocabulary back at it.
 Stay in character.`;
   }
 
@@ -68,9 +69,13 @@ Write your reply in 1 to 3 sentences. Important:
 - React the way real people do in social media comment threads. Don't
   open with their name or "@handle" unless it would actually feel natural.
 - Don't start with "agreed" or "great point". Just react to the substance.
-- You can quote a short phrase of theirs if it helps, but you don't have
-  to acknowledge them at all to be in conversation. Sometimes you can
-  just add your own take that builds on or pushes against what they said.
+- DO NOT echo or restate phrases from the post or earlier comments. If you
+  catch yourself reusing wording from above, rephrase entirely in YOUR voice.
+- If the thread is converging on one take, take a different angle: a
+  specific worry, a personal anecdote, a counter-example, a related concern,
+  a question nobody asked.
+- You can quote a short phrase of theirs if it serves a point (e.g., to
+  push back on it). Don't quote just to acknowledge.
 - Stay in character.`;
 }
 
