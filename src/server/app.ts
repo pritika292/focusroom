@@ -53,9 +53,14 @@ export function createApp(): Express {
       express.static(path.join(CLIENT_DIST, "assets"), { immutable: true, maxAge: "1y" }),
     );
     app.use(express.static(CLIENT_DIST, { index: false }));
-    app.get("/", (_req, res) => {
-      res.sendFile(indexHtml);
-    });
+    // SPA shell for known client-side routes. Each route returns
+    // index.html so the React router can take over.
+    const SPA_ROUTES = ["/", "/about"] as const;
+    for (const route of SPA_ROUTES) {
+      app.get(route, (_req, res) => {
+        res.sendFile(indexHtml);
+      });
+    }
   }
 
   return app;
