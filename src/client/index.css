@@ -307,7 +307,7 @@ input {
 .fr-upcoming {
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 18px 20px;
+  padding: 22px 26px;
   background: var(--card-bg);
 }
 .fr-upcoming__list {
@@ -315,7 +315,14 @@ input {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 8px;
+  gap: 12px 32px;
+}
+@media (min-width: 1024px) {
+  /* Now that the panel spans the page width, lay the 4 items out as a
+     2-col grid so the row isn't a long horizontal whitespace stripe. */
+  .fr-upcoming__list {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 .fr-upcoming__list li {
   display: flex;
@@ -982,9 +989,12 @@ input {
   }
 }
 .fr-persona-detail {
-  position: sticky;
-  top: 24px;
-  align-self: start;
+  /* Stretch to match the height of the 10x2 tile grid on the left so the
+     section reads as a paired layout, not a top-anchored sidecar. The
+     dl inside flexes to fill the extra vertical space. */
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -1051,7 +1061,12 @@ input {
 }
 .fr-persona-detail__dl {
   display: grid;
-  gap: 14px;
+  /* Each dl row is auto-sized but the dl as a whole stretches to fill
+     the remaining card height (after the hero). gap stretches with
+     align-content so rows space themselves evenly down the column. */
+  flex: 1 1 auto;
+  align-content: space-evenly;
+  gap: 18px;
   margin: 0;
 }
 .fr-persona-detail__dl > div {

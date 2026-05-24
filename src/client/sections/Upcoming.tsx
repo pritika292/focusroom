@@ -24,7 +24,7 @@ const ITEMS = [
 export function Upcoming() {
   return (
     <section className="max-w-page mx-auto px-6 lg:px-8 pt-2 pb-16">
-      <div className="max-w-content">
+      <div>
         <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-muted mb-3">
           On the roadmap
         </p>
