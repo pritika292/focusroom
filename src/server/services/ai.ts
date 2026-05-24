@@ -1,6 +1,7 @@
 import { DefaultAzureCredential, getBearerTokenProvider } from "@azure/identity";
 import { AzureOpenAI } from "openai";
 import { config } from "../config.js";
+import { reportAiUsage } from "./aiUsageEmit.js";
 
 export interface ChatResult {
   text: string;
@@ -62,11 +63,12 @@ async function doChat(
       { signal: ac.signal },
     );
     const text = res.choices[0]?.message?.content?.trim() ?? "";
-    return {
-      text,
-      tokensIn: res.usage?.prompt_tokens ?? 0,
-      tokensOut: res.usage?.completion_tokens ?? 0,
-    };
+    const tokensIn = res.usage?.prompt_tokens ?? 0;
+    const tokensOut = res.usage?.completion_tokens ?? 0;
+    // Report to controlroom for the cross-family dashboard tiles.
+    // Fire-and-forget; never blocks the caller.
+    reportAiUsage(config.AZURE_OPENAI_DEPLOYMENT, tokensIn, tokensOut);
+    return { text, tokensIn, tokensOut };
   } catch (err) {
     const status = (err as { status?: number }).status;
     if (status === 429 && !retried) {
