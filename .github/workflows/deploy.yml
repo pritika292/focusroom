@@ -95,12 +95,19 @@ jobs:
         # per VM; concurrent invocations get a 409 Conflict. Retry with
         # backoff so a sibling deploy that's just-finishing doesn't fail
         # this one. Up to ~7 minutes total wait before giving up.
+        #
+        # IMPORTANT: don't pipe az output through tee. Without
+        # `set -o pipefail` the pipe's exit code is tee's (always 0),
+        # masking az failures and short-circuiting the retry logic.
+        # Write az stdout directly to a file with `>` so the `if`
+        # checks az's actual exit code, then cat the file for the log.
         run: |
           set -eu
 
           attempts=8
           delay=20
           attempt=1
+          ok=false
           while [ "$attempt" -le "$attempts" ]; do
             echo "[deploy] attempt $attempt of $attempts"
             if az vm run-command invoke \
@@ -108,10 +115,15 @@ jobs:
                  --name "${{ vars.AZURE_DEPLOY_VM_NAME }}" \
                  --command-id RunShellScript \
                  --scripts @vm-deploy.sh \
-                 --query "value[0].message" -o tsv 2> az-error.log \
-                 | tee deploy-output.log; then
+                 --query "value[0].message" -o tsv \
+                 > deploy-output.log 2> az-error.log; then
+              ok=true
+              cat deploy-output.log
               break
             fi
+
+            echo "[deploy] az error output:"
+            cat az-error.log
 
             if grep -q "Run command extension execution is in progress" az-error.log; then
               echo "[deploy] another run-command is in-flight on the VM; sleeping ${delay}s and retrying"
@@ -121,12 +133,11 @@ jobs:
               continue
             fi
 
-            echo "[deploy] az failed with a non-retryable error:"
-            cat az-error.log
+            echo "[deploy] non-retryable az error (see above); failing the deploy"
             exit 1
           done
 
-          if [ "$attempt" -gt "$attempts" ]; then
+          if [ "$ok" != "true" ]; then
             echo "::error::gave up after $attempts retries; the VM is busy with another deploy"
             exit 1
           fi
