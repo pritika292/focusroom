@@ -10,6 +10,8 @@ Audience simulator. Drop a post, watch 20 hardcoded personas react in real time.
 
 Visitor types one message (a tagline, a product name, a question). FocusRoom runs a 60-turn simulation: 20 personas, each with three chances to participate. On each turn the picked persona rolls a fair three-sided die. One third of the time they drop a new top-level comment. One third of the time they reply to an existing post (anywhere in any thread). One third of the time they scroll past silently. Posts stream into the UI live via SSE as the orchestrator generates them, ~90 seconds end to end.
 
+Useful for marketers, founders, designers, and anyone who wants to gauge audience reactions before publishing.
+
 ## Why this exists
 
 An end-to-end demonstration of multi-agent orchestration on real infrastructure: prompt-injection defense (Azure AI Content Safety Prompt Shields), per-persona context isolation, live streaming over SSE, daily-budget circuit breakers, and a Postgres-backed transcript with FK-walkable threads. Authentication to Azure OpenAI is via the VM's Managed Identity, so no API keys leave Key Vault.
