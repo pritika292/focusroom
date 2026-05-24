@@ -61,8 +61,9 @@ else
   log "Updated focusroom_app password"
 fi
 
-log "Ensuring focusroom schema + grants"
+log "Ensuring database + schema + grants"
 pg_super <<'SQL'
+GRANT CONNECT ON DATABASE postgres TO focusroom_app;
 CREATE SCHEMA IF NOT EXISTS focusroom AUTHORIZATION focusroom_app;
 GRANT USAGE, CREATE ON SCHEMA focusroom TO focusroom_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA focusroom TO focusroom_app;
