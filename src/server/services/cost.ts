@@ -79,15 +79,7 @@ export async function isDailyBudgetExceeded(): Promise<boolean> {
 export function secondsUntilUtcMidnight(): number {
   const now = new Date();
   const tomorrow = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      0,
-      0,
-      0,
-      0,
-    ),
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0),
   );
   return Math.ceil((tomorrow.getTime() - now.getTime()) / 1000);
 }

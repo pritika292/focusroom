@@ -35,9 +35,7 @@
           if (stored === "light" || stored === "dark") {
             theme = stored;
           } else {
-            theme = window.matchMedia("(prefers-color-scheme: light)").matches
-              ? "light"
-              : "dark";
+            theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
           }
           document.documentElement.setAttribute("data-theme", theme);
         } catch (e) {

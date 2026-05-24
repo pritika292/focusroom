@@ -47,7 +47,8 @@ export function buildContext(args: ContextArgs): string {
       const indent = "  ".repeat(idx);
       const name = args.personaName(p.personaId);
       const location = args.personaLocation(p.personaId);
-      const marker = p.id === args.parentPostId ? "      <- THIS IS THE POST YOU ARE REPLYING TO" : "";
+      const marker =
+        p.id === args.parentPostId ? "      <- THIS IS THE POST YOU ARE REPLYING TO" : "";
       return `${indent}${name} (${location}):${marker}\n${indent}  ${p.body}`;
     })
     .join("\n\n");

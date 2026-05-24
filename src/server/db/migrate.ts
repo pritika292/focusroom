@@ -29,9 +29,7 @@ export async function migrate(
   const entries = await readdir(dir);
   const files = entries.filter((f) => f.endsWith(".sql")).sort();
 
-  const { rows } = await client.query<{ name: string }>(
-    "SELECT name FROM focusroom._migrations",
-  );
+  const { rows } = await client.query<{ name: string }>("SELECT name FROM focusroom._migrations");
   const applied = new Set(rows.map((r) => r.name));
 
   const result: MigrateResult = { applied: [], skipped: [] };

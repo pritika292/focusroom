@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Geist Variable for display sizes; system sans for body. Tokens land
-   together with the Hero in Epic 7 (#33). This minimal block keeps the
-   scaffold readable. */
-
 @font-face {
   font-family: "Geist";
   src: url("/fonts/Geist-Variable.woff2") format("woff2-variations");
@@ -60,4 +56,77 @@ body {
   transition:
     background-color 200ms ease,
     color 200ms ease;
+}
+
+.hero-mesh {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 28%, var(--accent-glow) 0%, transparent 55%),
+    radial-gradient(circle at 82% 72%, var(--accent-glow) 0%, transparent 55%);
+  background-size:
+    200% 200%,
+    200% 200%;
+  animation: mesh-drift 24s ease-in-out infinite;
+}
+
+@keyframes mesh-drift {
+  0%,
+  100% {
+    background-position:
+      0% 0%,
+      100% 100%;
+  }
+  50% {
+    background-position:
+      20% 15%,
+      80% 85%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-mesh {
+    animation: none;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.pulse-dot {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.post-card {
+  padding: 4px 0;
+  animation: post-in 220ms ease-out;
+}
+
+@keyframes post-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-card {
+    animation: none;
+  }
+}
+
+textarea {
+  font-family: inherit;
 }
