@@ -42,9 +42,11 @@ if [ -z "${FOCUSROOM_DB_PASSWORD:-}" ]; then
   log "Generated new FOCUSROOM_DB_PASSWORD"
 fi
 
-# Helper -- run a single psql -c against pritika-postgres as the superuser.
+# Helper -- run psql against pritika-postgres as the superuser. The -i
+# flag is essential so docker forwards stdin (lets us pipe SQL heredocs
+# to psql).
 pg_super() {
-  docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" pritika-postgres \
+  docker exec -i -e PGPASSWORD="$POSTGRES_PASSWORD" pritika-postgres \
     psql -U postgres -d "$DB_NAME" -v ON_ERROR_STOP=1 "$@"
 }
 
