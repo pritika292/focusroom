@@ -18,7 +18,9 @@ export async function migrate(
   client: pg.ClientBase,
   dir: string = MIGRATIONS_DIR,
 ): Promise<MigrateResult> {
-  await client.query(`CREATE SCHEMA IF NOT EXISTS focusroom`);
+  // The focusroom schema is created by bootstrap-vm.sh (running as the
+  // postgres superuser). The migration runner only manages its own
+  // bookkeeping table.
   await client.query(`
     CREATE TABLE IF NOT EXISTS focusroom._migrations (
       name        TEXT PRIMARY KEY,
