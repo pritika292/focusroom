@@ -475,7 +475,11 @@ input {
 
 /* Instagram-style feed */
 .ig-shell {
-  max-width: 580px;
+  /* Bumped 580 → 720 (#109). 580px is IG-comment width — fine for
+     one-liners, cramped for AI personas streaming 1–3 sentence
+     reactions. 720px tracks Twitter/X timeline width: wider column,
+     less aggressive wrapping, still reads as a focused conversation. */
+  max-width: 720px;
   margin: 0 auto;
   background: var(--card-bg);
   border: 1px solid var(--border);
