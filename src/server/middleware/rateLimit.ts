@@ -32,14 +32,14 @@ export function rateLimit(req: Request, res: Response, next: NextFunction): void
   const now = Date.now();
   const cutoff = now - WINDOW_MS;
   const recent = (submissions.get(ip) ?? []).filter((t) => t >= cutoff);
-  const remaining = Math.max(0, LIMIT_PER_HOUR - recent.length);
-  const resetAt = recent[0] ? Math.ceil((recent[0] + WINDOW_MS) / 1000) : Math.ceil(now / 1000);
 
   res.setHeader("X-RateLimit-Limit", String(LIMIT_PER_HOUR));
-  res.setHeader("X-RateLimit-Remaining", String(remaining));
-  res.setHeader("X-RateLimit-Reset", String(resetAt));
 
-  if (recent.length >= LIMIT_PER_HOUR) {
+  const oldest = recent[0];
+  if (recent.length >= LIMIT_PER_HOUR && oldest !== undefined) {
+    const resetAt = Math.ceil((oldest + WINDOW_MS) / 1000);
+    res.setHeader("X-RateLimit-Remaining", "0");
+    res.setHeader("X-RateLimit-Reset", String(resetAt));
     res.status(429).json({
       error: `You can run ${LIMIT_PER_HOUR} simulations per hour. Try again later.`,
     });
@@ -48,5 +48,15 @@ export function rateLimit(req: Request, res: Response, next: NextFunction): void
 
   recent.push(now);
   submissions.set(ip, recent);
+
+  // Headers reflect the state AFTER this request lands, which is the more
+  // useful semantic for the caller (they can divide by the limit and know
+  // how many more they can fire before being throttled).
+  const remaining = Math.max(0, LIMIT_PER_HOUR - recent.length);
+  const windowStart = recent[0] ?? now;
+  const resetAt = Math.ceil((windowStart + WINDOW_MS) / 1000);
+  res.setHeader("X-RateLimit-Remaining", String(remaining));
+  res.setHeader("X-RateLimit-Reset", String(resetAt));
+
   next();
 }

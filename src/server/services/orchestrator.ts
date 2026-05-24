@@ -12,7 +12,7 @@ const SLEEP_MAX_MS = 1500;
 
 // Sanitizer for model outputs. The persona prompts ban em dashes and en
 // dashes but the LLM still slips occasionally. Replace any that survive.
-function sanitize(text: string): string {
+export function sanitize(text: string): string {
   return text
     .replace(/\s*—\s*/g, ". ")
     .replace(/\s*–\s*/g, ", ")
@@ -161,14 +161,14 @@ async function run(simId: string, visitorPrompt: string): Promise<void> {
   console.log(`[orchestrator] sim ${simId} complete: ${postCount} posts, ${silentTurns} silent`);
 }
 
-function anyTurnsLeft(turnsRemaining: Map<string, number>): boolean {
+export function anyTurnsLeft(turnsRemaining: Map<string, number>): boolean {
   for (const v of turnsRemaining.values()) {
     if (v > 0) return true;
   }
   return false;
 }
 
-function pickPersona(turnsRemaining: Map<string, number>, excludeId: string | null): string {
+export function pickPersona(turnsRemaining: Map<string, number>, excludeId: string | null): string {
   const allIds: string[] = [];
   for (const [id, n] of turnsRemaining) {
     if (n > 0) allIds.push(id);
@@ -181,7 +181,7 @@ function pickPersona(turnsRemaining: Map<string, number>, excludeId: string | nu
   return pool[idx] ?? pool[0] ?? "";
 }
 
-function pickDecision(posts: PostNode[]): Decision {
+export function pickDecision(posts: PostNode[]): Decision {
   const r = Math.random();
   if (r < 1 / 3) return "original";
   if (r < 2 / 3) {
@@ -190,7 +190,7 @@ function pickDecision(posts: PostNode[]): Decision {
   return "skip";
 }
 
-function pickReplyTarget(posts: PostNode[]): string {
+export function pickReplyTarget(posts: PostNode[]): string {
   if (posts.length === 0) throw new Error("pickReplyTarget called with no posts");
   const idx = Math.floor(Math.random() * posts.length);
   const picked = posts[idx] ?? posts[0];

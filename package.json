@@ -16,10 +16,14 @@
     "start": "node dist/server/index.js",
     "migrate": "tsx src/server/db/migrate.ts",
     "abuse-review": "tsx scripts/abuse-review.ts",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test": "vitest run -c build/vitest.config.ts",
+    "test:unit": "vitest run -c build/vitest.config.ts tests/unit",
+    "test:int": "vitest run -c build/vitest.config.ts tests/integration",
+    "test:watch": "vitest -c build/vitest.config.ts"
   },
   "prettier": {
     "semi": true,
@@ -48,15 +52,18 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
+    "@types/supertest": "^7.2.0",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.5.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.13.0",
     "postcss": "^8.5.15",
     "prettier": "^3.3.0",
+    "supertest": "^7.2.2",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.10.0",
-    "vite": "^5.4.21"
+    "vite": "^5.4.21",
+    "vitest": "^2.1.4"
   }
 }

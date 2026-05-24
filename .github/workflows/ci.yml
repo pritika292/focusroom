@@ -1,0 +1,98 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Opt JavaScript actions (checkout, setup-node) onto the runner's Node 24
+# ahead of the June 2026 forced cutover so we stop seeing the deprecation
+# warning on every run.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+# Jobs run sequentially via `needs:` so a failure short-circuits the rest of
+# the pipeline instead of burning CI minutes on every checker for an
+# already-broken PR. Order is cheapest first: lint, typecheck (build),
+# docker-build, then the slowest gate (test).
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .tool-versions
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm audit --omit=dev --audit-level=high
+
+  typecheck:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .tool-versions
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+  docker-build:
+    needs: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build Docker image (verify Dockerfile is valid)
+        run: docker build -t focusroom:ci .
+
+  test:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: focusroom
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: focusroom_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U focusroom -d focusroom_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://focusroom:testpass@localhost:5432/focusroom_test
+      NODE_ENV: test
+      # ai.ts + promptShield.ts are vi.mock'd by tests/setup.server.ts so
+      # these placeholders are never used to hit Azure. Setting them keeps
+      # config.ts happy when modules load.
+      AZURE_OPENAI_ENDPOINT: https://test.example.invalid
+      AZURE_OPENAI_DEPLOYMENT: gpt-4.1-mini-test
+      FOCUSROOM_CONTENT_SAFETY_ENDPOINT: https://test-cs.example.invalid
+      FOCUSROOM_DAILY_BUDGET_USD: "2"
+      FOCUSROOM_IP_DENYLIST: "9.9.9.9"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .tool-versions
+          cache: npm
+      - run: npm ci
+      # Schema gets created by tests/helpers/testDb.ts on first integration
+      # test; nothing else to bootstrap. ai.ts + promptShield.ts are
+      # vi.mock'd so no Azure calls fire.
+      - run: npm test
