@@ -21,6 +21,12 @@ export function Header() {
           <span className="font-mono text-[12px] tracking-[0.18em] uppercase">FOCUSROOM</span>
         </a>
         <nav className="flex items-center gap-3 sm:gap-4">
+          <a
+            href="/about"
+            className="hidden sm:inline font-mono text-[12px] tracking-[0.18em] uppercase text-muted hover:text-accent transition-colors"
+          >
+            About
+          </a>
           <div className="flex items-center gap-3 sm:gap-3.5 rounded-md border border-border/70 bg-card/40 px-3 py-1.5">
             <a
               href={LINKEDIN}

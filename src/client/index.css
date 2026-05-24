@@ -844,3 +844,55 @@ input {
   color: var(--text);
   line-height: 1.5;
 }
+
+/* ----------------------------------------------------------------------------
+   About page: 3-pane layout helpers — link rows in the contact column
+   and the bordered card containing the architecture diagram.
+   --------------------------------------------------------------------------*/
+.fr-about-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 120ms ease;
+}
+.fr-about-link__label {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.fr-about-link__value {
+  font-size: 14px;
+  line-height: 1.3;
+  word-break: break-word;
+}
+.fr-about-link:hover,
+.fr-about-link:focus-visible {
+  border-color: var(--accent);
+  background: var(--card-bg-hover);
+  transform: translateY(-1px);
+  outline: 0;
+}
+.fr-about-link--primary {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+.fr-about-link--primary .fr-about-link__label {
+  color: var(--accent);
+}
+
+.fr-arch-card {
+  padding: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
