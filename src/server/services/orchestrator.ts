@@ -10,11 +10,15 @@ const TURNS_PER_PERSONA = 3;
 const SLEEP_MIN_MS = 800;
 const SLEEP_MAX_MS = 1500;
 
-// TEMPORARY token-saver while iterating on the UI. Caps a simulation at
-// MAX_POSTS successful LLM-backed posts (skips do not count). Revert to
-// the full 60-turn budget once the UI is finalized -- tracked in
-// https://github.com/pritika292/focusroom/issues/60
-const MAX_POSTS = 5;
+// Sanitizer for model outputs. The persona prompts ban em dashes and en
+// dashes but the LLM still slips occasionally. Replace any that survive.
+function sanitize(text: string): string {
+  return text
+    .replace(/\s*—\s*/g, ". ")
+    .replace(/\s*–\s*/g, ", ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
 
 /**
  * Drives a single simulation. Runs exactly TURNS_PER_PERSONA * PERSONAS.length
@@ -92,8 +96,9 @@ async function run(simId: string, visitorPrompt: string): Promise<void> {
         const result = await chat(persona.systemPrompt, userMessage);
         await recordSpend(simId, result.tokensIn, result.tokensOut);
 
-        const safety = isSafe(result.text);
-        if (!safety.safe || !result.text) {
+        const cleaned = sanitize(result.text);
+        const safety = isSafe(cleaned);
+        if (!safety.safe || !cleaned) {
           await incrementDropped(simId);
         } else {
           const { rows } = await pool.query<{ id: string; created_at: Date }>(
@@ -101,14 +106,7 @@ async function run(simId: string, visitorPrompt: string): Promise<void> {
               (sim_id, persona_id, parent_post_id, body, tokens_in, tokens_out)
              VALUES ($1, $2, $3, $4, $5, $6)
              RETURNING id, created_at`,
-            [
-              simId,
-              persona.id,
-              parentPostId ?? null,
-              result.text,
-              result.tokensIn,
-              result.tokensOut,
-            ],
+            [simId, persona.id, parentPostId ?? null, cleaned, result.tokensIn, result.tokensOut],
           );
           const r = rows[0];
           if (r) {
@@ -116,7 +114,7 @@ async function run(simId: string, visitorPrompt: string): Promise<void> {
               id: r.id,
               personaId: persona.id,
               parentPostId: parentPostId ?? null,
-              body: result.text,
+              body: cleaned,
               createdAt: r.created_at,
             };
             liveSnapshot.push(node);
@@ -130,7 +128,7 @@ async function run(simId: string, visitorPrompt: string): Promise<void> {
               simId,
               personaId: persona.id,
               parentId: parentPostId ?? null,
-              body: result.text,
+              body: cleaned,
               createdAt: r.created_at,
               persona: publicPersonaShape(persona.id),
             });
@@ -145,11 +143,6 @@ async function run(simId: string, visitorPrompt: string): Promise<void> {
     turnsRemaining.set(personaId, (turnsRemaining.get(personaId) ?? 1) - 1);
     if ((turnsRemaining.get(personaId) ?? 0) <= 0) {
       turnsRemaining.delete(personaId);
-    }
-    // TEMPORARY cap (see MAX_POSTS above + issue #60). Once we hit
-    // MAX_POSTS successful posts, stop. Skips do not count.
-    if (postCount >= MAX_POSTS) {
-      break;
     }
     await sleep(SLEEP_MIN_MS + Math.random() * (SLEEP_MAX_MS - SLEEP_MIN_MS));
   }

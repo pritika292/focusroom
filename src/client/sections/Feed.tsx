@@ -357,12 +357,6 @@ export function Feed({ simId, prompt, state }: Props) {
             ))
           )}
         </div>
-        {state.complete && (
-          <div className="ig-complete">
-            <span className="font-mono text-[12px] text-muted">simulation complete</span>
-            <ExportButtons simId={simId} enabled />
-          </div>
-        )}
       </div>
       {active && (
         <PersonaPanel persona={active} posts={state.posts} onClose={() => setActive(null)} />
