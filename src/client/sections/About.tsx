@@ -1,6 +1,7 @@
 // About page: 3-pane layout matching the family convention
-// (pg-inspector #123). Left column = story; middle column = tech +
-// architecture diagram; right column = author contact + portfolio links.
+// (pg-inspector #123). The architecture diagram now spans the full page
+// width above the 3-column grid so the distributed-systems topology
+// reads as substantial; the column is just the tech-with-rationale list.
 
 const EMAIL = "pritikaapriyadarshini@gmail.com";
 const GITHUB = "https://github.com/pritika292/focusroom";
@@ -42,9 +43,19 @@ const TECH = [
 export function About() {
   return (
     <section className="max-w-page mx-auto px-6 lg:px-8 pt-10 pb-20">
+      {/* Full-width architecture diagram. Promoted out of the middle
+          column so the topology reads at a normal viewport width. */}
+      <div className="mb-10">
+        <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-muted mb-3">
+          Architecture
+        </p>
+        <div className="fr-arch-card">
+          <ArchitectureDiagram />
+        </div>
+      </div>
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)] lg:gap-12">
         <Story />
-        <TechAndDiagram />
+        <Tech />
         <Contact />
       </div>
     </section>
@@ -101,15 +112,12 @@ function Story() {
   );
 }
 
-function TechAndDiagram() {
+function Tech() {
   return (
     <div>
       <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-muted mb-3">
         How it's built
       </p>
-      <div className="fr-arch-card mb-6">
-        <ArchitectureDiagram />
-      </div>
       <ul className="space-y-3">
         {TECH.map((t) => (
           <li key={t.name} className="text-[14.5px] leading-snug">
@@ -158,16 +166,17 @@ function Contact() {
   );
 }
 
+// Dense distributed-systems topology. Hand-positioned SVG; no library.
+// Boxes grouped by tier with an Azure-VM subgraph frame so the picture
+// reads as real infrastructure, not a marketing flowchart. Sized for
+// full-width About display.
 function ArchitectureDiagram() {
-  // Hand-positioned SVG. Static, no library, no auto-layout, no Mermaid.
-  // 540x320 viewBox matches pg-inspector + shortlive density so the
-  // diagram reads as substantial at column width rather than sparse.
   return (
     <svg
-      viewBox="0 0 540 320"
+      viewBox="0 0 1200 760"
       className="block w-full h-auto"
       role="img"
-      aria-label="focusroom flow: browser POSTs to Express; rate-limit + validate + Prompt Shields gate the input; orchestrator runs 60 turns; per turn it calls Azure OpenAI with Managed Identity, sanitizes, runs output safety, INSERTs a post, and publishes an SSE event back to the browser via the in-process hub."
+      aria-label="focusroom architecture: visitor browser POSTs through Caddy on an Azure VM into Express; four input gates run in order (rate limit, zod validate, Azure Prompt Shields, daily budget) before the orchestrator launches; each of 60 turns rolls 33/33/33 (original/reply/skip), calls Azure OpenAI with Managed Identity, sanitizes, runs output safety, inserts into Postgres, and publishes to a per-simId SSE hub which fans out to the browser; per-call token usage is fire-and-forget reported to controlroom; deploys land via GitHub Actions + OIDC + az vm run-command."
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
@@ -180,74 +189,309 @@ function ArchitectureDiagram() {
           markerHeight="6"
           orient="auto-start-reverse"
         >
-          <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)" />
         </marker>
       </defs>
 
-      {/* Browser */}
-      <Box x={10} y={130} w={110} h={50} label="browser" sub="React + EventSource" />
+      {/* EXTERNAL (left column) */}
+      <GroupLabel x={100} y={32} label="EXTERNAL" />
+      <Box x={20} y={50} w={200} h={56} label="visitor browser" sub="React 19 · EventSource SSE" />
+      <Box
+        x={20}
+        y={130}
+        w={200}
+        h={56}
+        label="controlroom"
+        sub="POST /api/ai-usage/focusroom"
+        dashed
+      />
+      <Box x={20} y={210} w={200} h={56} label="GitHub Actions" sub="OIDC token exchange" dashed />
 
-      {/* Express */}
-      <Box x={170} y={130} w={140} h={50} label="Express :3016" sub="route + middleware" accent />
+      {/* VM subgraph */}
+      <VmFrame x={280} y={20} w={620} h={720} label="Azure VM · B2as_v2 · northcentralus" />
 
-      {/* Three security layers, stacked along the right rail */}
-      <Box x={360} y={10} w={170} h={48} label="layer 1" sub="rate-limit + validate" />
-      <Box x={360} y={68} w={170} h={48} label="layer 2" sub="Prompt Shields (Azure)" />
-      <Box x={360} y={126} w={170} h={48} label="layer 3" sub="orchestrator + output safety" />
+      {/* EDGE */}
+      <GroupLabel x={420} y={62} label="EDGE" />
+      <Box x={310} y={80} w={220} h={56} label="Caddy" sub="TLS · focusroom.pritika.studio" />
 
-      {/* Bottom row: Azure + Postgres */}
-      <Box x={360} y={200} w={170} h={48} label="Azure OpenAI" sub="gpt-4.1-mini" dashed />
-      <Box x={360} y={258} w={170} h={48} label="Postgres" sub="focusroom schema" dashed />
+      {/* APP */}
+      <GroupLabel x={420} y={170} label="APP · focusroom :3016" />
+      <Box
+        x={310}
+        y={190}
+        w={220}
+        h={62}
+        label="Express 5 · Node 24"
+        sub="helmet · 32kb body · CSP"
+        accent
+      />
 
-      {/* Auth + SSE side annotations */}
-      <Box x={10} y={10} w={120} h={48} label="Managed Identity" sub="no API keys" dashed />
-      <Box x={10} y={258} w={120} h={48} label="SSE hub" sub="per-simId pub/sub" />
+      {/* INPUT GATES · in order */}
+      <GroupLabel x={420} y={280} label="INPUT GATES · sequential" />
+      <Box
+        x={310}
+        y={300}
+        w={220}
+        h={50}
+        label="Layer 1 · IP rate limit"
+        sub="10 / hour · sliding window"
+      />
+      <Box
+        x={310}
+        y={360}
+        w={220}
+        h={50}
+        label="Layer 2 · zod validate"
+        sub="length · slur · PII · regex"
+      />
+      <Box
+        x={310}
+        y={420}
+        w={220}
+        h={50}
+        label="Layer 3 · Prompt Shields"
+        sub="Azure Content Safety · MI auth"
+      />
+      <Box
+        x={310}
+        y={480}
+        w={220}
+        h={50}
+        label="Layer 4 · budget gate"
+        sub="503 + Retry-After if exceeded"
+      />
 
-      {/* Edges: browser <-> express */}
-      <Edge from={[120, 155]} to={[170, 155]} both />
+      {/* ORCHESTRATOR · per-sim loop */}
+      <GroupLabel x={420} y={560} label="ORCHESTRATOR · async, per simId" />
+      <Box x={310} y={580} w={220} h={56} label="60-turn loop" sub="20 personas × 3 chances" />
+      <Box x={310} y={648} w={220} h={50} label="33 / 33 / 33 dice" sub="original · reply · skip" />
 
-      {/* express -> 3 layers */}
-      <Edge from={[310, 145]} to={[360, 35]} />
-      <Edge from={[310, 152]} to={[360, 92]} />
-      <Edge from={[310, 159]} to={[360, 150]} />
+      {/* DATA PLANE (right column) */}
+      <GroupLabel x={730} y={62} label="DATA PLANE · pritika network" />
+      <Box
+        x={620}
+        y={80}
+        w={260}
+        h={70}
+        label="Postgres 16 · focusroom"
+        sub="simulations · posts (parent_post_id self-FK)"
+      />
+      <Box
+        x={620}
+        y={170}
+        w={260}
+        h={56}
+        label="SSE hub · in-process"
+        sub="Map<simId, Set<client>> · fan-out"
+      />
 
-      {/* layer 3 -> postgres + azure (the work it does each turn) */}
-      <Edge from={[445, 174]} to={[445, 200]} dashed />
-      <Edge from={[445, 174]} to={[445, 258]} dashed />
+      {/* PER-TURN PIPELINE */}
+      <GroupLabel x={730} y={258} label="PER-TURN PIPELINE" />
+      <Box
+        x={620}
+        y={278}
+        w={260}
+        h={50}
+        label="context builder"
+        sub="DFS thread walk · parent chain"
+      />
+      <Box x={620} y={338} w={260} h={50} label="sanitize" sub="strip em / en dashes" />
+      <Box
+        x={620}
+        y={398}
+        w={260}
+        h={50}
+        label="output safety scanner"
+        sub="slur regex · prompt-leak heuristic"
+      />
+      <Box
+        x={620}
+        y={458}
+        w={260}
+        h={50}
+        label="record spend → aiUsageEmit"
+        sub="tokens in/out · daily total"
+        dashed
+      />
 
-      {/* Managed Identity -> Express (used to mint Azure bearer) */}
-      <Edge from={[70, 58]} to={[200, 135]} dashed />
+      {/* AZURE */}
+      <GroupLabel x={730} y={528} label="AZURE" />
+      <Box x={620} y={548} w={260} h={56} label="Azure OpenAI" sub="gpt-4.1-mini · pritika-ai" />
+      <Box
+        x={620}
+        y={618}
+        w={260}
+        h={50}
+        label="Managed Identity"
+        sub="VM system-assigned · CSU role"
+        dashed
+      />
+      <Box
+        x={620}
+        y={680}
+        w={260}
+        h={50}
+        label="Azure Key Vault"
+        sub="Postgres creds · boot only"
+        dashed
+      />
 
-      {/* Express -> SSE hub -> browser (asynchronous push) */}
-      <Edge from={[200, 180]} to={[70, 258]} dashed />
-      <Edge from={[70, 282]} to={[65, 180]} dashed />
+      {/* CONTROL PLANE (far right) */}
+      <GroupLabel x={1020} y={32} label="CONTROL PLANE" />
+      <Box
+        x={920}
+        y={50}
+        w={260}
+        h={56}
+        label="GitHub · pritika292/focusroom"
+        sub="ci · deploy · OIDC"
+        dashed
+      />
+      <Box
+        x={920}
+        y={120}
+        w={260}
+        h={56}
+        label="Azure Entra ID"
+        sub="federated identity credential"
+        dashed
+      />
+      <Box
+        x={920}
+        y={190}
+        w={260}
+        h={56}
+        label="Azure RBAC"
+        sub="CSU on pritika-ai · VM Contributor"
+        dashed
+      />
+      <Box
+        x={920}
+        y={260}
+        w={260}
+        h={56}
+        label="az vm run-command"
+        sub="git pull · compose up"
+        dashed
+      />
 
-      {/* Labels */}
-      <g
-        fontFamily="ui-monospace, SF Mono, Menlo, monospace"
-        fontSize="9.5"
-        style={{ fill: "var(--accent)" }}
-      >
-        <text x="145" y="148">
-          POST /sim
-        </text>
-        <text x="142" y="167">
-          GET stream
-        </text>
-      </g>
+      {/* Edges */}
+      {/* Browser <-> Caddy/Express */}
+      <Edge from={[220, 78]} to={[310, 108]} both />
+      <Edge from={[420, 138]} to={[420, 190]} />
+
+      {/* Express -> input gates (sequential) */}
+      <Edge from={[420, 252]} to={[420, 300]} />
+      <Edge from={[420, 350]} to={[420, 360]} />
+      <Edge from={[420, 410]} to={[420, 420]} />
+      <Edge from={[420, 470]} to={[420, 480]} />
+
+      {/* Layer 4 -> orchestrator (spawn) */}
+      <Edge from={[420, 530]} to={[420, 580]} />
+      {/* 60-turn loop -> dice */}
+      <Edge from={[420, 636]} to={[420, 648]} />
+
+      {/* Orchestrator/dice -> per-turn pipeline (context → sanitize → safety → spend) */}
+      <Edge from={[530, 663]} to={[620, 303]} />
+      <Edge from={[620, 303]} to={[620, 338]} />
+      <Edge from={[620, 363]} to={[620, 398]} />
+      <Edge from={[620, 423]} to={[620, 458]} />
+
+      {/* Pipeline -> Postgres (INSERT post) + SSE hub (publish) */}
+      <Edge from={[620, 423]} to={[620, 150]} />
+      <Edge from={[620, 423]} to={[620, 198]} />
+
+      {/* SSE hub -> browser (async push) */}
+      <Edge from={[620, 198]} to={[220, 78]} dashed />
+
+      {/* AI client -> Azure OpenAI via MI */}
+      <Edge from={[620, 458]} to={[620, 548]} />
+      <Edge from={[620, 576]} to={[620, 618]} dashed />
+      {/* MI -> Prompt Shields (also auth path) */}
+      <Edge from={[750, 618]} to={[530, 445]} dashed />
+      {/* MI -> Key Vault */}
+      <Edge from={[750, 668]} to={[750, 680]} dashed />
+
+      {/* aiUsageEmit -> controlroom */}
+      <Edge from={[620, 483]} to={[220, 158]} dashed />
+
+      {/* Deploy: GitHub -> Entra ID -> RBAC -> run-command -> Express */}
+      <Edge from={[920, 78]} to={[920, 148]} dashed />
+      <Edge from={[920, 148]} to={[920, 218]} dashed />
+      <Edge from={[920, 218]} to={[920, 288]} dashed />
+      <Edge from={[920, 288]} to={[530, 240]} dashed />
 
       {/* Caption */}
       <text
-        x="270"
-        y="316"
+        x="600"
+        y="742"
         textAnchor="middle"
         fontFamily="ui-monospace, SF Mono, Menlo, monospace"
-        fontSize="9.5"
-        style={{ fill: "var(--muted)" }}
+        fontSize="12"
+        fill="var(--muted)"
       >
-        solid: request path · dashed: side-flows (auth, persistence, async push)
+        ── solid: synchronous request / write · - - dashed: async push · auth · telemetry · deploy
       </text>
     </svg>
+  );
+}
+
+function GroupLabel({ x, y, label }: { x: number; y: number; label: string }) {
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor="middle"
+      fontFamily="ui-monospace, SF Mono, Menlo, monospace"
+      fontSize="11"
+      letterSpacing="2"
+      fill="var(--muted)"
+      style={{ textTransform: "uppercase" }}
+    >
+      {label}
+    </text>
+  );
+}
+
+function VmFrame({
+  x,
+  y,
+  w,
+  h,
+  label,
+}: {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  label: string;
+}) {
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        rx={10}
+        ry={10}
+        fill="none"
+        stroke="var(--border)"
+        strokeWidth={1}
+        strokeDasharray="2 3"
+      />
+      <text
+        x={x + 14}
+        y={y + 14}
+        fontFamily="ui-monospace, SF Mono, Menlo, monospace"
+        fontSize="10"
+        letterSpacing="2"
+        fill="var(--muted)"
+        style={{ textTransform: "uppercase" }}
+      >
+        {label}
+      </text>
+    </g>
   );
 }
 
@@ -277,30 +521,31 @@ function Box({
         y={y}
         width={w}
         height={h}
-        rx={4}
+        rx={6}
         fill="none"
         stroke={accent ? "var(--accent)" : "var(--muted)"}
-        strokeWidth={accent ? 1.4 : 1.1}
-        strokeDasharray={dashed ? "4 3" : undefined}
+        strokeWidth={accent ? 1.5 : 1.25}
+        strokeDasharray={dashed ? "6 4" : undefined}
       />
       <text
         x={x + w / 2}
-        y={sub ? y + h / 2 - 2 : y + h / 2 + 4}
+        y={sub ? y + h / 2 - 4 : y + h / 2 + 5}
         textAnchor="middle"
         fontFamily="ui-monospace, SF Mono, Menlo, monospace"
-        fontSize="11"
-        style={{ fill: accent ? "var(--accent)" : "var(--text)" }}
+        fontSize={accent ? "16" : "14"}
+        fontWeight={accent ? 600 : 500}
+        fill={accent ? "var(--accent)" : "var(--text)"}
       >
         {label}
       </text>
       {sub && (
         <text
           x={x + w / 2}
-          y={y + h / 2 + 12}
+          y={y + h / 2 + 14}
           textAnchor="middle"
           fontFamily="ui-monospace, SF Mono, Menlo, monospace"
-          fontSize="9"
-          style={{ fill: "var(--muted)" }}
+          fontSize="11"
+          fill="var(--muted)"
         >
           {sub}
         </text>
@@ -327,8 +572,8 @@ function Edge({
       x2={to[0]}
       y2={to[1]}
       stroke="var(--muted)"
-      strokeWidth={1.1}
-      strokeDasharray={dashed ? "4 3" : undefined}
+      strokeWidth={1.5}
+      strokeDasharray={dashed ? "6 4" : undefined}
       markerEnd="url(#fr-arrow)"
       markerStart={both ? "url(#fr-arrow)" : undefined}
     />
