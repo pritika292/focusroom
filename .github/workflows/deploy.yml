@@ -90,14 +90,46 @@ jobs:
           EOF
 
       - name: Deploy via az vm run-command
+        # The VM is shared with controlroom, shortlive, pg-inspector, etc.
+        # Only one `az vm run-command invoke` can be in-flight at a time
+        # per VM; concurrent invocations get a 409 Conflict. Retry with
+        # backoff so a sibling deploy that's just-finishing doesn't fail
+        # this one. Up to ~7 minutes total wait before giving up.
         run: |
           set -eu
-          az vm run-command invoke \
-            --resource-group "${{ vars.AZURE_DEPLOY_RG }}" \
-            --name "${{ vars.AZURE_DEPLOY_VM_NAME }}" \
-            --command-id RunShellScript \
-            --scripts @vm-deploy.sh \
-            --query "value[0].message" -o tsv | tee deploy-output.log
+
+          attempts=8
+          delay=20
+          attempt=1
+          while [ "$attempt" -le "$attempts" ]; do
+            echo "[deploy] attempt $attempt of $attempts"
+            if az vm run-command invoke \
+                 --resource-group "${{ vars.AZURE_DEPLOY_RG }}" \
+                 --name "${{ vars.AZURE_DEPLOY_VM_NAME }}" \
+                 --command-id RunShellScript \
+                 --scripts @vm-deploy.sh \
+                 --query "value[0].message" -o tsv 2> az-error.log \
+                 | tee deploy-output.log; then
+              break
+            fi
+
+            if grep -q "Run command extension execution is in progress" az-error.log; then
+              echo "[deploy] another run-command is in-flight on the VM; sleeping ${delay}s and retrying"
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay + 20))
+              continue
+            fi
+
+            echo "[deploy] az failed with a non-retryable error:"
+            cat az-error.log
+            exit 1
+          done
+
+          if [ "$attempt" -gt "$attempts" ]; then
+            echo "::error::gave up after $attempts retries; the VM is busy with another deploy"
+            exit 1
+          fi
 
           if grep -q "Health check passed" deploy-output.log; then
             echo "::notice::focusroom deployed and healthy"
