@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PostEvent, PublicPersona } from "../lib/types.js";
 import type { SimStreamState } from "../lib/useSimStream.js";
 
@@ -31,6 +31,12 @@ function buildTree(posts: PostEvent[]): PostNode[] {
     }
   }
   return roots;
+}
+
+function countDescendants(node: PostNode): number {
+  let n = 0;
+  for (const c of node.children) n += 1 + countDescendants(c);
+  return n;
 }
 
 function relTime(iso: string): string {
@@ -74,10 +80,32 @@ function PersonaAvatar({
 function PostCard({
   post,
   onPersonaClick,
+  onToggleCollapse,
+  hasChildren,
+  isCollapsed,
+  hiddenCount,
 }: {
   post: PostNode;
   onPersonaClick: (p: PublicPersona) => void;
+  onToggleCollapse: () => void;
+  hasChildren: boolean;
+  isCollapsed: boolean;
+  hiddenCount: number;
 }) {
+  function handleBodyClick(e: React.MouseEvent) {
+    // Don't trigger collapse when the click came from an inner button
+    // (avatar, persona-name link).
+    if ((e.target as HTMLElement).closest("button")) return;
+    if (!hasChildren) return;
+    onToggleCollapse();
+  }
+  function handleKey(e: React.KeyboardEvent) {
+    if (!hasChildren) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onToggleCollapse();
+    }
+  }
   return (
     <article className="ig-comment">
       <PersonaAvatar
@@ -85,7 +113,15 @@ function PostCard({
         onClick={() => onPersonaClick(post.persona)}
         size={32}
       />
-      <div className="ig-comment__body">
+      <div
+        className={`ig-comment__body${hasChildren ? " ig-comment__body--clickable" : ""}`}
+        onClick={handleBodyClick}
+        onKeyDown={handleKey}
+        role={hasChildren ? "button" : undefined}
+        tabIndex={hasChildren ? 0 : undefined}
+        aria-expanded={hasChildren ? !isCollapsed : undefined}
+        aria-label={hasChildren ? (isCollapsed ? "Expand replies" : "Collapse replies") : undefined}
+      >
         <p className="ig-comment__line">
           <button
             type="button"
@@ -100,6 +136,16 @@ function PostCard({
           <span>{relTime(post.createdAt)}</span>
           <span aria-hidden>·</span>
           <span>{post.persona.location}</span>
+          {hasChildren && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="ig-comment__collapse">
+                {isCollapsed
+                  ? `▸ ${hiddenCount} ${hiddenCount === 1 ? "reply" : "replies"} hidden`
+                  : "▾ hide replies"}
+              </span>
+            </>
+          )}
         </p>
       </div>
     </article>
@@ -109,22 +155,38 @@ function PostCard({
 function Thread({
   node,
   depth,
+  collapsed,
+  onToggle,
   onPersonaClick,
 }: {
   node: PostNode;
   depth: number;
+  collapsed: Set<string>;
+  onToggle: (id: string) => void;
   onPersonaClick: (p: PublicPersona) => void;
 }) {
+  const hasChildren = node.children.length > 0;
+  const isCollapsed = hasChildren && collapsed.has(node.id);
+  const hiddenCount = isCollapsed ? countDescendants(node) : 0;
   return (
     <div className={depth > 0 ? "ig-reply" : ""}>
-      <PostCard post={node} onPersonaClick={onPersonaClick} />
-      {node.children.length > 0 && (
+      <PostCard
+        post={node}
+        onPersonaClick={onPersonaClick}
+        onToggleCollapse={() => onToggle(node.id)}
+        hasChildren={hasChildren}
+        isCollapsed={isCollapsed}
+        hiddenCount={hiddenCount}
+      />
+      {hasChildren && !isCollapsed && (
         <div className="ig-thread-children">
           {node.children.map((c) => (
             <Thread
               key={c.id}
               node={c}
               depth={Math.min(depth + 1, 2)}
+              collapsed={collapsed}
+              onToggle={onToggle}
               onPersonaClick={onPersonaClick}
             />
           ))}
@@ -328,8 +390,18 @@ function OriginalPost({ prompt }: { prompt: string }) {
 
 export function Feed({ simId, prompt, state }: Props) {
   const [active, setActive] = useState<PublicPersona | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
   const tree = useMemo(() => buildTree(state.posts), [state.posts]);
   const commentCount = state.posts.length;
+
+  const toggleCollapsed = useCallback((id: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   return (
     <section className="max-w-page mx-auto px-6 pt-2 pb-12">
@@ -343,6 +415,9 @@ export function Feed({ simId, prompt, state }: Props) {
           </span>
           <ExportButtons simId={simId} enabled={state.complete} compact />
         </div>
+        <div className="ig-collapse-hint" role="note">
+          Tap a comment to hide its replies. Tap again to expand.
+        </div>
         <div className="ig-comments">
           {tree.length === 0 ? (
             <div className="fr-empty">
@@ -353,7 +428,14 @@ export function Feed({ simId, prompt, state }: Props) {
             </div>
           ) : (
             tree.map((node) => (
-              <Thread key={node.id} node={node} depth={0} onPersonaClick={setActive} />
+              <Thread
+                key={node.id}
+                node={node}
+                depth={0}
+                collapsed={collapsed}
+                onToggle={toggleCollapsed}
+                onPersonaClick={setActive}
+              />
             ))
           )}
         </div>
