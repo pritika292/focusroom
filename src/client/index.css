@@ -57,6 +57,9 @@ body {
     sans-serif;
   font-size: 17px;
   line-height: 1.6;
+  /* Weight 500 reads heavier on dark backgrounds without going bold.
+     Matches the family-wide weight pass (focusroom#87, pg-inspector#124). */
+  font-weight: 500;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition:
@@ -64,10 +67,21 @@ body {
     color 200ms ease;
 }
 
+p {
+  font-weight: 500;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
+}
+
 textarea,
 button,
 input {
   font-family: inherit;
+  font-weight: inherit;
 }
 
 /* Hero mesh */
@@ -122,7 +136,7 @@ input {
   gap: 12px;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
