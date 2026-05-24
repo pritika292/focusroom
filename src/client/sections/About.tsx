@@ -170,6 +170,49 @@ function Contact() {
 // Boxes grouped by tier with an Azure-VM subgraph frame so the picture
 // reads as real infrastructure, not a marketing flowchart. Sized for
 // full-width About display.
+//
+// Box helper auto-wraps long sub-labels at the " · " separator and
+// stretches the rect to fit additional lines so dense subs stay inside.
+// Each box can carry a `tone` prop that tints the stroke + label.
+
+type Tone = "accent" | "edge" | "gates" | "orchestrator" | "data" | "azure" | "deploy" | "neutral";
+
+// Inline hex strings — focusroom's SVG sets fill/stroke directly rather
+// than via Tailwind classes, so the color values live alongside the
+// other style attributes.
+const TONE: Record<Tone, { stroke: string; label: string }> = {
+  accent: { stroke: "var(--accent)", label: "var(--accent)" },
+  edge: { stroke: "#38bdf8", label: "#38bdf8" },
+  gates: { stroke: "#f59e0b", label: "#f59e0b" },
+  orchestrator: { stroke: "#10b981", label: "#10b981" },
+  data: { stroke: "#06b6d4", label: "#06b6d4" },
+  azure: { stroke: "#8b5cf6", label: "#8b5cf6" },
+  deploy: { stroke: "#f43f5e", label: "#f43f5e" },
+  neutral: { stroke: "var(--muted)", label: "var(--text)" },
+};
+
+const SUB_FONT_SIZE = 11;
+
+function wrapSub(sub: string, w: number): string[] {
+  const charBudget = Math.floor((w - 16) / (SUB_FONT_SIZE * 0.55));
+  if (sub.length <= charBudget) return [sub];
+  const tokens = sub.split(" · ");
+  if (tokens.length === 1) return [sub];
+  const lines: string[] = [];
+  let cur = "";
+  for (const t of tokens) {
+    const next = cur ? `${cur} · ${t}` : t;
+    if (next.length <= charBudget) {
+      cur = next;
+    } else {
+      if (cur) lines.push(cur);
+      cur = t;
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
 function ArchitectureDiagram() {
   return (
     <svg
@@ -212,7 +255,15 @@ function ArchitectureDiagram() {
 
       {/* EDGE */}
       <GroupLabel x={420} y={62} label="EDGE" />
-      <Box x={310} y={80} w={220} h={56} label="Caddy" sub="TLS · focusroom.pritika.studio" />
+      <Box
+        x={310}
+        y={80}
+        w={220}
+        h={56}
+        label="Caddy"
+        sub="TLS · focusroom.pritika.studio"
+        tone="edge"
+      />
 
       {/* APP */}
       <GroupLabel x={420} y={170} label="APP · focusroom :3016" />
@@ -223,7 +274,7 @@ function ArchitectureDiagram() {
         h={62}
         label="Express 5 · Node 24"
         sub="helmet · 32kb body · CSP"
-        accent
+        tone="accent"
       />
 
       {/* INPUT GATES · in order */}
@@ -235,6 +286,7 @@ function ArchitectureDiagram() {
         h={50}
         label="Layer 1 · IP rate limit"
         sub="10 / hour · sliding window"
+        tone="gates"
       />
       <Box
         x={310}
@@ -243,6 +295,7 @@ function ArchitectureDiagram() {
         h={50}
         label="Layer 2 · zod validate"
         sub="length · slur · PII · regex"
+        tone="gates"
       />
       <Box
         x={310}
@@ -251,6 +304,7 @@ function ArchitectureDiagram() {
         h={50}
         label="Layer 3 · Prompt Shields"
         sub="Azure Content Safety · MI auth"
+        tone="gates"
       />
       <Box
         x={310}
@@ -259,12 +313,29 @@ function ArchitectureDiagram() {
         h={50}
         label="Layer 4 · budget gate"
         sub="503 + Retry-After if exceeded"
+        tone="gates"
       />
 
       {/* ORCHESTRATOR · per-sim loop */}
       <GroupLabel x={420} y={560} label="ORCHESTRATOR · async, per simId" />
-      <Box x={310} y={580} w={220} h={56} label="60-turn loop" sub="20 personas × 3 chances" />
-      <Box x={310} y={648} w={220} h={50} label="33 / 33 / 33 dice" sub="original · reply · skip" />
+      <Box
+        x={310}
+        y={580}
+        w={220}
+        h={56}
+        label="60-turn loop"
+        sub="20 personas × 3 chances"
+        tone="orchestrator"
+      />
+      <Box
+        x={310}
+        y={648}
+        w={220}
+        h={50}
+        label="33 / 33 / 33 dice"
+        sub="original · reply · skip"
+        tone="orchestrator"
+      />
 
       {/* DATA PLANE (right column) */}
       <GroupLabel x={730} y={62} label="DATA PLANE · pritika network" />
@@ -275,6 +346,7 @@ function ArchitectureDiagram() {
         h={70}
         label="Postgres 16 · focusroom"
         sub="simulations · posts (parent_post_id self-FK)"
+        tone="data"
       />
       <Box
         x={620}
@@ -283,6 +355,7 @@ function ArchitectureDiagram() {
         h={56}
         label="SSE hub · in-process"
         sub="Map<simId, Set<client>> · fan-out"
+        tone="data"
       />
 
       {/* PER-TURN PIPELINE */}
@@ -294,8 +367,17 @@ function ArchitectureDiagram() {
         h={50}
         label="context builder"
         sub="DFS thread walk · parent chain"
+        tone="orchestrator"
       />
-      <Box x={620} y={338} w={260} h={50} label="sanitize" sub="strip em / en dashes" />
+      <Box
+        x={620}
+        y={338}
+        w={260}
+        h={50}
+        label="sanitize"
+        sub="strip em / en dashes"
+        tone="orchestrator"
+      />
       <Box
         x={620}
         y={398}
@@ -303,6 +385,7 @@ function ArchitectureDiagram() {
         h={50}
         label="output safety scanner"
         sub="slur regex · prompt-leak heuristic"
+        tone="orchestrator"
       />
       <Box
         x={620}
@@ -311,12 +394,21 @@ function ArchitectureDiagram() {
         h={50}
         label="record spend → aiUsageEmit"
         sub="tokens in/out · daily total"
+        tone="orchestrator"
         dashed
       />
 
       {/* AZURE */}
       <GroupLabel x={730} y={528} label="AZURE" />
-      <Box x={620} y={548} w={260} h={56} label="Azure OpenAI" sub="gpt-4.1-mini · pritika-ai" />
+      <Box
+        x={620}
+        y={548}
+        w={260}
+        h={56}
+        label="Azure OpenAI"
+        sub="gpt-4.1-mini · pritika-ai"
+        tone="azure"
+      />
       <Box
         x={620}
         y={618}
@@ -324,6 +416,7 @@ function ArchitectureDiagram() {
         h={50}
         label="Managed Identity"
         sub="VM system-assigned · CSU role"
+        tone="azure"
         dashed
       />
       <Box
@@ -333,6 +426,7 @@ function ArchitectureDiagram() {
         h={50}
         label="Azure Key Vault"
         sub="Postgres creds · boot only"
+        tone="azure"
         dashed
       />
 
@@ -345,6 +439,7 @@ function ArchitectureDiagram() {
         h={56}
         label="GitHub · pritika292/focusroom"
         sub="ci · deploy · OIDC"
+        tone="deploy"
         dashed
       />
       <Box
@@ -354,6 +449,7 @@ function ArchitectureDiagram() {
         h={56}
         label="Azure Entra ID"
         sub="federated identity credential"
+        tone="deploy"
         dashed
       />
       <Box
@@ -363,6 +459,7 @@ function ArchitectureDiagram() {
         h={56}
         label="Azure RBAC"
         sub="CSU on pritika-ai · VM Contributor"
+        tone="deploy"
         dashed
       />
       <Box
@@ -372,6 +469,7 @@ function ArchitectureDiagram() {
         h={56}
         label="az vm run-command"
         sub="git pull · compose up"
+        tone="deploy"
         dashed
       />
 
@@ -502,7 +600,7 @@ function Box({
   h,
   label,
   sub,
-  accent,
+  tone = "neutral",
   dashed,
 }: {
   x: number;
@@ -511,20 +609,25 @@ function Box({
   h: number;
   label: string;
   sub?: string;
-  accent?: boolean;
+  tone?: Tone;
   dashed?: boolean;
 }) {
+  const subLines = sub ? wrapSub(sub, w) : [];
+  const extraHeight = Math.max(0, (subLines.length - 1) * 12);
+  const rectH = h + extraHeight;
+  const palette = TONE[tone];
+  const isAccent = tone === "accent";
   return (
     <g>
       <rect
         x={x}
         y={y}
         width={w}
-        height={h}
+        height={rectH}
         rx={6}
         fill="none"
-        stroke={accent ? "var(--accent)" : "var(--muted)"}
-        strokeWidth={accent ? 1.5 : 1.25}
+        stroke={palette.stroke}
+        strokeWidth={isAccent ? 1.6 : 1.35}
         strokeDasharray={dashed ? "6 4" : undefined}
       />
       <text
@@ -532,24 +635,25 @@ function Box({
         y={sub ? y + h / 2 - 4 : y + h / 2 + 5}
         textAnchor="middle"
         fontFamily="ui-monospace, SF Mono, Menlo, monospace"
-        fontSize={accent ? "16" : "14"}
-        fontWeight={accent ? 600 : 500}
-        fill={accent ? "var(--accent)" : "var(--text)"}
+        fontSize={isAccent ? "16" : "14"}
+        fontWeight={isAccent ? 600 : 500}
+        fill={palette.label}
       >
         {label}
       </text>
-      {sub && (
+      {subLines.map((line, i) => (
         <text
+          key={i}
           x={x + w / 2}
-          y={y + h / 2 + 14}
+          y={y + h / 2 + 14 + i * 12}
           textAnchor="middle"
           fontFamily="ui-monospace, SF Mono, Menlo, monospace"
-          fontSize="11"
+          fontSize={String(SUB_FONT_SIZE)}
           fill="var(--muted)"
         >
-          {sub}
+          {line}
         </text>
-      )}
+      ))}
     </g>
   );
 }
