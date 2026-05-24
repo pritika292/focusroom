@@ -1,7 +1,8 @@
 -- 001_init.sql -- FocusRoom v1 schema.
--- Schema is created by the migrate runner; this file owns tables + indexes.
-
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- Schema is created by the bootstrap-vm.sh role-grant step. This file
+-- owns the tables + indexes. gen_random_uuid() is built into PG 13+
+-- so we don't need the pgcrypto extension (which would require
+-- superuser to install).
 
 CREATE TABLE IF NOT EXISTS focusroom.simulations (
   id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
