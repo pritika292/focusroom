@@ -3,6 +3,9 @@ import helmet from "helmet";
 import path from "node:path";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { simulationsRouter } from "./routes/simulations.js";
+import { streamRouter } from "./routes/stream.js";
+import { transcriptsRouter } from "./routes/transcripts.js";
 
 const CLIENT_DIST = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../client");
 
@@ -34,6 +37,10 @@ export function createApp(): Express {
   app.get("/health", (_req, res) => {
     res.json({ ok: true, service: "focusroom" });
   });
+
+  app.use(simulationsRouter);
+  app.use(streamRouter);
+  app.use(transcriptsRouter);
 
   const indexHtml = path.join(CLIENT_DIST, "index.html");
   if (existsSync(indexHtml)) {
