@@ -44,6 +44,9 @@ export const config = {
   // spending controls). Default 0 (disabled) — was 2 in v1 but the
   // per-call cost rounding bug made $2 trip after ~4 sims.
   FOCUSROOM_DAILY_BUDGET_USD: readNonNegativeNumber("FOCUSROOM_DAILY_BUDGET_USD", 0),
+  // Global hard cap on AI runs (simulations) per UTC day, backed by
+  // Postgres (see services/dailyLimit.ts). 0 disables the cap. Default 50.
+  AI_DAILY_LIMIT: readNonNegativeNumber("AI_DAILY_LIMIT", 50),
   FOCUSROOM_IP_DENYLIST: (optString("FOCUSROOM_IP_DENYLIST") ?? "")
     .split(",")
     .map((s) => s.trim())

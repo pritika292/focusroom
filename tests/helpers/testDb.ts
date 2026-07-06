@@ -22,7 +22,9 @@ export async function setupTestSchema(): Promise<void> {
 
 export async function truncateAll(): Promise<void> {
   const pool = getPool();
-  await pool.query("TRUNCATE focusroom.posts, focusroom.simulations RESTART IDENTITY CASCADE");
+  await pool.query(
+    "TRUNCATE focusroom.posts, focusroom.simulations, focusroom.ai_daily_usage RESTART IDENTITY CASCADE",
+  );
 }
 
 export async function dropTestSchema(): Promise<void> {

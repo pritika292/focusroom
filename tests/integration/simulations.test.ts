@@ -103,4 +103,22 @@ describe("POST /api/sim", () => {
       .send({ prompt: "one more after the limit" });
     expect(r11.status).toBe(429);
   });
+
+  it("returns 429 when the global daily AI run cap is reached", async () => {
+    const app = createApp();
+    const pool = getPool();
+    // Preset today's global counter above any reasonable limit so the next
+    // run is rejected regardless of the configured AI_DAILY_LIMIT.
+    await pool.query(
+      `INSERT INTO focusroom.ai_daily_usage (usage_date, run_count)
+       VALUES ((now() AT TIME ZONE 'UTC')::date, 1000000)
+       ON CONFLICT (usage_date) DO UPDATE SET run_count = 1000000`,
+    );
+    const r = await request(app)
+      .post("/api/sim")
+      .set("X-Forwarded-For", uniqueIp("daily-cap"))
+      .send({ prompt: "this run should be blocked by the daily cap" });
+    expect(r.status).toBe(429);
+    expect(r.body.error).toMatch(/daily/i);
+  });
 });

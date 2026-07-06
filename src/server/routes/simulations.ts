@@ -4,6 +4,7 @@ import { rateLimit } from "../middleware/rateLimit.js";
 import { validateSubmit, type ValidatedSubmit } from "../middleware/validate.js";
 import { shieldPrompt } from "../services/promptShield.js";
 import { isDailyBudgetExceeded, secondsUntilUtcMidnight } from "../services/cost.js";
+import { reserveDailyAiRun } from "../services/dailyLimit.js";
 import { startSim } from "../services/orchestrator.js";
 
 export const simulationsRouter = Router();
@@ -40,6 +41,18 @@ simulationsRouter.post(
       );
       res.status(400).json({
         error: "That prompt looks like it's trying to break the simulation. Try a different one.",
+      });
+      return;
+    }
+
+    // Global daily AI-run cap (protects Azure OpenAI spend). Reserve a slot
+    // before the persona AI runs; shield-blocked prompts never reach here so
+    // they don't consume the daily quota.
+    if (!(await reserveDailyAiRun())) {
+      res.setHeader("Retry-After", String(secondsUntilUtcMidnight()));
+      res.status(429).json({
+        error:
+          "Daily demo limit reached — FocusRoom runs 50 simulations per day. Resets at UTC midnight.",
       });
       return;
     }
